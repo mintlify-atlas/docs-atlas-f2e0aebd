@@ -1,0 +1,89 @@
+---
+title: Installation
+description: Download ApiArk for Windows, macOS, or Linux. Also available via Homebrew, Scoop, APT, and the Microsoft Store.
+---
+
+## Download
+
+Download the latest release directly from GitHub:
+
+| Platform | Installer |
+|----------|-----------|
+| **Windows** | [`.exe` installer](https://github.com/berbicanes/apiark/releases/latest) · [`.msi`](https://github.com/berbicanes/apiark/releases/latest) |
+| **macOS Apple Silicon** | [`.dmg`](https://github.com/berbicanes/apiark/releases/latest) |
+| **macOS Intel** | [`.dmg`](https://github.com/berbicanes/apiark/releases/latest) |
+| **Linux** | [`.AppImage`](https://github.com/berbicanes/apiark/releases/latest) · [`.deb`](https://github.com/berbicanes/apiark/releases/latest) · [`.rpm`](https://github.com/berbicanes/apiark/releases/latest) |
+
+## Package managers
+
+<CodeGroup>
+
+```bash Homebrew (macOS)
+brew tap berbicanes/apiark
+brew install --cask apiark
+```
+
+```bash Scoop (Windows)
+scoop bucket add apiark https://github.com/berbicanes/apiark
+scoop install apiark
+```
+
+```bash APT (Debian/Ubuntu)
+curl -fsSL https://berbicanes.github.io/apiark-apt/install.sh | sudo bash
+sudo apt install apiark
+```
+
+</CodeGroup>
+
+ApiArk is also available on the [Microsoft Store](https://apps.microsoft.com/search?query=ApiArk).
+
+## Build from source
+
+If you prefer to build ApiArk yourself, follow these steps.
+
+<Steps>
+  <Step title="Install prerequisites">
+    You need the following tools before building:
+
+    - **Node.js** 22 or later
+    - **pnpm** 10 or later
+    - **Rust toolchain** (stable) — install via [rustup.rs](https://rustup.rs)
+    - **Tauri v2 system dependencies** — platform-specific libraries listed in the [Tauri v2 prerequisites guide](https://v2.tauri.app/start/prerequisites/)
+  </Step>
+  <Step title="Clone the repository">
+    ```bash
+    git clone https://github.com/berbicanes/apiark.git
+    cd apiark
+    ```
+  </Step>
+  <Step title="Install dependencies">
+    ```bash
+    pnpm install
+    ```
+  </Step>
+  <Step title="Build">
+    ```bash
+    pnpm tauri build
+    ```
+
+    The compiled installer is placed in `apps/desktop/src-tauri/target/release/bundle/`.
+  </Step>
+</Steps>
+
+<Note>
+  To run ApiArk in development mode without producing an installer, use `pnpm tauri dev` instead of `pnpm tauri build`.
+</Note>
+
+## System requirements
+
+| Requirement | Minimum |
+|-------------|---------|
+| **RAM** | 256 MB available |
+| **Disk** | 50 MB free |
+| **Windows** | Windows 10 (64-bit) or later |
+| **macOS** | macOS 11 (Big Sur) or later |
+| **Linux** | GTK 3.x, WebKit2GTK 4.1 (required by Tauri v2) |
+
+<Warning>
+  On Linux, you must have WebKit2GTK 4.1 installed. On Debian/Ubuntu: `sudo apt install libwebkit2gtk-4.1-dev`. The `.deb` package from the APT repository installs this dependency automatically.
+</Warning>

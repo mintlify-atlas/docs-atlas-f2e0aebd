@@ -1,0 +1,126 @@
+---
+title: Import & export
+description: Import collections from Postman, Insomnia, Bruno, Hoppscotch, OpenAPI, HAR, and cURL — and export to any of these formats from ApiArk.
+---
+
+ApiArk can import collections from every major API client and export to all common formats. Your data is never locked in.
+
+## Import
+
+Supported import formats:
+
+| Format | Notes |
+|---|---|
+| **Postman** | Collection v2.1 (recommended) and v2.0 |
+| **Insomnia** | Insomnia export JSON |
+| **Bruno** | Bruno collection directories |
+| **Hoppscotch** | Hoppscotch collection JSON |
+| **OpenAPI 3.x** | Spec imported as a collection of requests |
+| **HAR** | Browser DevTools network export |
+| **cURL** | Paste a cURL command directly or import from file |
+
+### How to import
+
+<Steps>
+  <Step title="Open the command palette">
+    Press `Ctrl+K` (or `Cmd+K` on macOS) to open the command palette.
+  </Step>
+  <Step title="Search for Import Collection">
+    Type **Import Collection** and press Enter.
+  </Step>
+  <Step title="Select your file">
+    Choose the file to import from the file picker. For cURL, you can paste the command directly into the text field.
+  </Step>
+  <Step title="Review the import preview">
+    ApiArk shows a preview before importing. Confirm the details look correct, then click **Import**.
+  </Step>
+</Steps>
+
+### Import preview
+
+Before finalizing an import, ApiArk shows a summary of what will be created:
+
+| Field | Description |
+|---|---|
+| `collectionName` | The name that will be given to the imported collection |
+| `requestCount` | Total number of requests detected |
+| `folderCount` | Number of folders (nested groups) |
+| `environmentCount` | Number of environments found in the export |
+| `warnings` | Items that could not be fully imported |
+
+Warnings appear when an item could not be imported exactly — for example, an unsupported auth type or a script that uses a feature unavailable in ApiArk. Each warning includes the `itemName` and a `message` explaining what was skipped. You can still proceed with the import; warnings are non-blocking.
+
+### Format notes
+
+<Tabs>
+  <Tab title="Postman">
+    Collection v2.1 JSON is recommended. Collection v2.0 is also supported but may produce more warnings for newer Postman-specific features.
+
+    To export from Postman: open the collection menu → **Export** → select **Collection v2.1**.
+  </Tab>
+  <Tab title="OpenAPI">
+    OpenAPI 3.x specs are imported as a flat collection of requests — one request per operation. Path parameters, query parameters, and request bodies are mapped automatically.
+
+    <Note>
+      OpenAPI 2.x (Swagger) is not supported. Upgrade your spec to OpenAPI 3.x before importing.
+    </Note>
+  </Tab>
+  <Tab title="HAR">
+    HAR (HTTP Archive) files are exported from your browser's DevTools network panel. In Chrome or Firefox, open DevTools → **Network** tab → right-click any request → **Save all as HAR**.
+
+    All captured requests are imported as individual request files.
+  </Tab>
+  <Tab title="cURL">
+    You can import a cURL command without a file. In the import dialog, paste the command directly. ApiArk parses the method, URL, headers, and body automatically.
+
+    ```bash
+    curl -X POST https://api.example.com/users \
+      -H "Authorization: Bearer {{token}}" \
+      -H "Content-Type: application/json" \
+      -d '{"name": "Alice"}'
+    ```
+  </Tab>
+</Tabs>
+
+### Switching from Postman
+
+<Steps>
+  <Step title="Export your Postman collection">
+    In Postman, open the collection menu and select **Export**. Choose **Collection v2.1 JSON** and save the file.
+  </Step>
+  <Step title="Open ApiArk">
+    Launch ApiArk on your machine.
+  </Step>
+  <Step title="Import the file">
+    Press `Ctrl+K` → **Import Collection** → select the exported `.json` file.
+  </Step>
+  <Step title="Done">
+    Your requests are now plain YAML files stored on your filesystem. No account, no cloud, no lock-in.
+  </Step>
+</Steps>
+
+## Export
+
+Supported export formats:
+
+| Format | Use case |
+|---|---|
+| **ApiArk** | Native YAML — back up or share your collection as-is |
+| **Postman** | Share with teammates using Postman |
+| **OpenAPI** | Generate an OpenAPI 3.x spec from your collection |
+| **Bruno** | Migrate to Bruno |
+| **Insomnia** | Migrate to Insomnia |
+
+### How to export
+
+Right-click your collection in the sidebar → **Export** → choose a format. ApiArk writes the export file to the location you choose.
+
+You can also export from the CLI:
+
+```bash
+apiark export ./my-collection --format openapi --output spec.yaml
+```
+
+<Tip>
+  Use the **ApiArk** export format for backups. It produces the same YAML files you already have on disk — nothing is transformed or lost.
+</Tip>

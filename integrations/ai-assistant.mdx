@@ -1,0 +1,92 @@
+---
+title: AI assistant
+description: Use natural language to build API requests, auto-generate test scripts, and get assertion suggestions — powered by any OpenAI-compatible endpoint.
+---
+
+The ApiArk AI assistant connects to any OpenAI-compatible API to help you build and test requests faster. You can use OpenAI, Anthropic, a local Ollama instance, or any other compatible provider.
+
+## What the AI assistant can do
+
+<CardGroup cols={3}>
+  <Card title="Build requests" icon="wand-magic-sparkles">
+    Describe what you want in plain language and ApiArk fills in the method, URL, headers, and body.
+  </Card>
+  <Card title="Generate tests" icon="flask">
+    Auto-write test scripts for an existing request based on the request shape and expected behavior.
+  </Card>
+  <Card title="Suggest assertions" icon="check">
+    Analyze a response and suggest assertions that match its structure.
+  </Card>
+</CardGroup>
+
+## Configuration
+
+The AI assistant requires three settings, all found under **Settings → AI**:
+
+| Setting | Description | Example |
+|---|---|---|
+| `aiEndpoint` | Base URL of the OpenAI-compatible API | `https://api.openai.com/v1` |
+| `aiApiKey` | Your API key for the endpoint | `sk-...` |
+| `aiModel` | Model name to use | `gpt-4o`, `claude-3-5-sonnet`, `llama3` |
+
+### Setup
+
+<Steps>
+  <Step title="Open Settings">
+    Go to **Settings → AI**.
+  </Step>
+  <Step title="Enter the API endpoint">
+    For OpenAI, use `https://api.openai.com/v1`. For a local Ollama instance, use `http://localhost:11434/v1`. For other providers, check their documentation for the OpenAI-compatible base URL.
+  </Step>
+  <Step title="Enter your API key">
+    Paste your API key. For local models (Ollama), you can enter any non-empty string — no real key is required.
+  </Step>
+  <Step title="Choose a model">
+    Enter the model name exactly as the provider expects it — for example, `gpt-4o`, `claude-3-5-sonnet`, or `llama3`.
+  </Step>
+  <Step title="Save">
+    Click **Save**. The AI assistant is now available in the request editor.
+  </Step>
+</Steps>
+
+## Using the AI assistant
+
+### Build a request from natural language
+
+In any request tab, click the **AI wand** icon in the toolbar or press `Ctrl+Shift+A`. Type a description of the request you want:
+
+> GET the list of users with pagination — page and per_page as query params
+
+ApiArk sends the description to the configured model and fills in the method, URL, query parameters, headers, and body. You can edit the result before sending.
+
+### Generate test scripts
+
+With an existing request open, click **Generate tests** in the AI panel. ApiArk sends the request definition to the model and writes a test script into the **Tests** tab. The generated tests use the `ark.test()` and `ark.expect()` API.
+
+```typescript
+ark.test("should return 200", () => {
+  ark.expect(ark.response.status).to.equal(200);
+});
+
+ark.test("should return a list of users", () => {
+  const body = ark.response.json();
+  ark.expect(body).to.have.property("data");
+  ark.expect(body.data).to.be.an("array");
+});
+```
+
+## Local AI with Ollama
+
+For a fully local, private setup, run [Ollama](https://ollama.com) and point ApiArk at it:
+
+| Setting | Value |
+|---|---|
+| `aiEndpoint` | `http://localhost:11434/v1` |
+| `aiApiKey` | any non-empty string |
+| `aiModel` | e.g. `llama3`, `mistral`, `codellama` |
+
+With a local model, no request data leaves your machine.
+
+<Warning>
+  When using a hosted AI endpoint (OpenAI, Anthropic, etc.), your request details — URLs, headers, body schema — are sent to that provider. If your requests contain sensitive data, use a local model instead.
+</Warning>

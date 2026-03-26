@@ -1,0 +1,73 @@
+---
+title: API docs generation
+description: Generate standalone HTML or Markdown documentation from any ApiArk collection and share it with teammates who don't use ApiArk.
+---
+
+ApiArk can render your collection into documentation files you can share, host, or commit to a repository. The output is self-contained — recipients do not need to install ApiArk to read it.
+
+## Generating documentation
+
+<Steps>
+  <Step title="Open the Docs panel">
+    Click **Docs** in the left sidebar.
+  </Step>
+  <Step title="Select a collection">
+    Choose the collection you want to document from the collection picker.
+  </Step>
+  <Step title="Choose a format">
+    Select **HTML** for a single self-contained file suitable for hosting, or **Markdown** for files you can commit to a repository or paste into a wiki.
+  </Step>
+  <Step title="Generate">
+    Click **Generate**. ApiArk writes the output to the directory you choose.
+  </Step>
+</Steps>
+
+## Output formats
+
+The `DocsFormat` type defines the two available formats:
+
+<Tabs>
+  <Tab title="HTML">
+    A single `.html` file with embedded styles. Open it in any browser. Suitable for attaching to an email, hosting on a static file server, or dropping into a shared drive.
+  </Tab>
+  <Tab title="Markdown">
+    One `.md` file per request, plus an index file. Renders correctly on GitHub, GitLab, Notion, Confluence, and most documentation platforms.
+  </Tab>
+</Tabs>
+
+## What gets included
+
+For each request in the collection, the generated documentation includes:
+
+| Section | Source |
+|---|---|
+| Request name | `name` field in the `.yaml` file |
+| Method and URL | `method` and `url` fields |
+| Description | `description` field (if present) |
+| Headers | `headers` object |
+| Query parameters | `params` object |
+| Request body | `body.content` and `body.type` |
+| Auth type | `auth.type` (e.g., `bearer`, `api-key`) |
+| Example response | Last recorded response from a real request run |
+
+<Tip>
+  Run your requests at least once before generating docs so that ApiArk can include real example responses. Requests that have never been run will not have an example response section.
+</Tip>
+
+## Sharing documentation
+
+The HTML output is fully self-contained and has no external dependencies. You can:
+
+- Email the file directly
+- Host it on any static file server (Nginx, S3, GitHub Pages)
+- Attach it to a Jira ticket or Confluence page
+
+Markdown output can be committed alongside your collection in the same Git repository, so documentation stays in sync with your requests.
+
+## OpenAPI editor
+
+If you maintain an OpenAPI specification separately from your collection, ApiArk includes an **OpenAPI editor** with [Spectral](https://stoplight.io/open-source/spectral) integration for linting. Open it from **Tools → OpenAPI Editor**.
+
+<Note>
+  The OpenAPI editor is a separate feature from docs generation. Docs generation works from your ApiArk collection; the OpenAPI editor works from a standalone `.yaml` or `.json` OpenAPI spec file.
+</Note>

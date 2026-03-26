@@ -1,0 +1,111 @@
+---
+title: Collection runner
+description: Run an entire collection or folder sequentially in ApiArk — with configurable iterations, data-driven testing via CSV or JSON, and JUnit/HTML/JSON reports.
+---
+
+The collection runner executes all requests in a collection (or a specific folder) one after another, in order. You can repeat the run across multiple iterations, feed variable values from an external data file, and export structured results for CI pipelines.
+
+## Opening the runner
+
+Open the runner from the **Runner** tab in the sidebar, or press `Ctrl+K` and search for **Run Collection**.
+
+## Runner configuration
+
+Before starting a run, configure it using the options below. These correspond directly to the `RunConfig` type.
+
+| Option | Description |
+|---|---|
+| **Collection** | The collection to run (`collectionPath`) |
+| **Folder** | Optionally restrict the run to a specific subfolder (`folderPath`) |
+| **Environment** | Which saved environment to activate for the run (`environmentName`) |
+| **Delay** | Milliseconds to wait between requests (`delayMs`) |
+| **Iterations** | How many times to repeat the full run (`iterations`) |
+| **Data file** | CSV or JSON file for data-driven testing (`dataFile`) |
+| **Stop on error** | Halt the run immediately on the first failed request (`stopOnError`) |
+
+## Data-driven testing
+
+A data file lets you run the same collection multiple times with different variable values each iteration. Provide a CSV or JSON file — each row (CSV) or object (JSON) becomes one iteration, and its fields are injected into the environment.
+
+<Tabs>
+  <Tab title="CSV">
+    Each column header becomes an environment variable name. Each row is one iteration.
+
+    ```csv
+    userName,userEmail
+    Alice,alice@example.com
+    Bob,bob@example.com
+    ```
+
+    With this file and `iterations: 1`, the runner executes the collection twice — once with `{{userName}} = Alice` and once with `{{userName}} = Bob`.
+  </Tab>
+  <Tab title="JSON">
+    Provide an array of objects. Each object is one iteration.
+
+    ```json
+    [
+      { "userName": "Alice", "userEmail": "alice@example.com" },
+      { "userName": "Bob",   "userEmail": "bob@example.com"   }
+    ]
+    ```
+  </Tab>
+</Tabs>
+
+<Note>
+  When a data file is provided, the number of effective iterations equals the number of rows or objects in the file, multiplied by the `iterations` setting.
+</Note>
+
+## Run results
+
+When the run completes, ApiArk shows a summary and a per-request breakdown.
+
+### Summary
+
+The `RunSummary` includes:
+
+| Field | Description |
+|---|---|
+| `totalRequests` | Total number of requests executed across all iterations |
+| `totalPassed` | Number of requests where all assertions and tests passed |
+| `totalFailed` | Number of requests with at least one failure |
+| `totalTimeMs` | Total wall-clock time for the entire run |
+
+### Per-request results
+
+Each `RequestRunResult` in the results table shows:
+
+| Field | Description |
+|---|---|
+| `name` | Request display name |
+| `method` | HTTP method |
+| `url` | Resolved URL |
+| `status` | HTTP status code (if a response was received) |
+| `timeMs` | Response time in milliseconds |
+| `passed` | Whether all tests and assertions passed |
+| `testCount` / `testPassed` | Total script-based tests and how many passed |
+| `assertionCount` / `assertionPassed` | Total declarative assertions and how many passed |
+| `error` | Error message if the request failed to send |
+
+## Exporting results
+
+You can export the run results from the runner UI. Three formats are available:
+
+| Format | Use case |
+|---|---|
+| **JUnit XML** | CI systems (Jenkins, GitHub Actions, GitLab CI) |
+| **HTML** | Human-readable report to share with a team |
+| **JSON** | Machine-readable, for custom tooling |
+
+## CLI equivalent
+
+You can run collections from the command line using the `apiark run` command:
+
+```bash
+apiark run ./my-collection --env production --iterations 3 --data users.csv --reporter junit
+```
+
+All `RunConfig` options are available as flags. Use `apiark run --help` for the full flag reference.
+
+<Tip>
+  Use the collection runner as a smoke test after deployments. Point it at your production environment with `stopOnError` enabled and a low `delayMs` to get fast go/no-go feedback.
+</Tip>

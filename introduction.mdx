@@ -1,0 +1,64 @@
+---
+title: Introduction
+description: ApiArk is a privacy-first desktop API client built on Tauri v2. No login, no cloud, no lock-in — just fast, local-first API development.
+---
+
+ApiArk is a desktop API platform built with Tauri v2. It stores everything as plain YAML files you own, uses ~60 MB of RAM at idle, and starts in under 2 seconds. There is no account to create, no cloud sync, and no proprietary format standing between you and your data.
+
+## What ApiArk is
+
+At its core, ApiArk is an API client — you send HTTP requests, inspect responses, and organize requests into collections. But it goes further:
+
+- **Multi-protocol** — REST, GraphQL, gRPC, WebSocket, SSE, MQTT, and Socket.IO in one app
+- **Local mock servers** — spin up a mock API from your collection, with Faker.js data, latency simulation, and error injection, with no usage limits
+- **Scheduled monitors** — cron-based automated testing that runs on your machine, not a remote server
+- **TypeScript scripting** — pre/post-request scripts with full type definitions and a built-in test API
+- **Plugin system** — extend ApiArk with JavaScript or WASM plugins
+- **Proxy capture** — intercept and replay HTTP/HTTPS traffic with a local proxy
+
+## Key differentiators
+
+**~60 MB RAM.** ApiArk is built on Tauri v2, which uses the native OS webview instead of bundling Chromium. Postman uses 300–800 MB. ApiArk uses ~60 MB.
+
+**Local YAML storage.** Every request is a `.yaml` file. Collections are directories. You can open them in any text editor, commit them to Git, and diff them like any other code. There is no proprietary format to work around.
+
+**No account required.** ApiArk never asks you to sign in. Nothing leaves your machine unless you explicitly trigger a network request.
+
+**No lock-in.** If you decide to leave ApiArk, your data leaves with you. Every file is a standard format. You can import from — and export to — Postman, Insomnia, Bruno, Hoppscotch, OpenAPI, HAR, and cURL.
+
+## Comparison
+
+| | Postman | Bruno | Hoppscotch | **ApiArk** |
+|---|---|---|---|---|
+| **Framework** | Electron | Electron | Tauri | **Tauri v2** |
+| **RAM usage** | 300–800 MB | 150–300 MB | 50–80 MB | **~60 MB** |
+| **Startup** | 10–30s | 3–8s | \<2s | **\<2s** |
+| **Account required** | Yes | No | Optional | **No** |
+| **Data storage** | Cloud | Filesystem | IndexedDB | **Filesystem (YAML)** |
+| **Git-friendly** | No | Yes (.bru) | No | **Yes (standard YAML)** |
+| **gRPC** | Yes | Yes | No | **Yes** |
+| **WebSocket** | Yes | No | Yes | **Yes** |
+| **SSE** | Yes | No | Yes | **Yes** |
+| **MQTT** | No | No | No | **Yes** |
+| **Mock servers** | Cloud only | No | No | **Local** |
+| **Monitors** | Cloud only | No | No | **Local** |
+| **Plugin system** | No | No | No | **JS + WASM** |
+| **Proxy capture** | No | No | No | **Yes** |
+| **Response diff** | No | No | No | **Yes** |
+
+## Where to go next
+
+<CardGroup cols={2}>
+  <Card title="Installation" icon="download" href="/installation">
+    Download ApiArk for Windows, macOS, or Linux, or install via Homebrew, Scoop, or APT.
+  </Card>
+  <Card title="Quickstart" icon="rocket" href="/quickstart">
+    Send your first request, save it to a collection, and set up an environment variable.
+  </Card>
+  <Card title="Requests" icon="paper-plane" href="/features/requests">
+    Learn how to build and send requests, add headers, authentication, and body content.
+  </Card>
+  <Card title="Protocols" icon="network-wired" href="/features/protocols">
+    Go beyond REST — use GraphQL, gRPC, WebSocket, SSE, MQTT, and Socket.IO.
+  </Card>
+</CardGroup>

@@ -1,0 +1,87 @@
+---
+title: Assertions reference
+description: Reference for the declarative assert block in request YAML files.
+---
+
+The `assert` block lets you validate responses without writing script code. Assertions run after the response is received, alongside any `tests` script, and their results are displayed in the **Assertions** tab of the response panel.
+
+## Structure
+
+The `assert` block is a YAML object where:
+
+- **Keys** are JSONPath-like selectors that address a part of the response (`status`, `responseTime`, `body.fieldName`, `body.nested.field`).
+- **Values** are either a direct expected value (equality check) or an operator object `{ operator: value }`.
+
+```yaml
+assert:
+  status: 201
+  body.id: { type: string }
+  body.name: { eq: "Alice" }
+  responseTime: { lt: 2000 }
+  body.roles: { contains: "admin" }
+  body.token: { exists: true }
+```
+
+## Operators
+
+| Operator | Value type | Description | Example |
+|----------|------------|-------------|---------|
+| (direct value) | any | Equality check | `status: 200` |
+| `eq` | any | Equal to | `body.name: { eq: "John" }` |
+| `neq` | any | Not equal to | `status: { neq: 500 }` |
+| `gt` | number | Greater than | `responseTime: { gt: 0 }` |
+| `gte` | number | Greater than or equal | `body.count: { gte: 1 }` |
+| `lt` | number | Less than | `responseTime: { lt: 2000 }` |
+| `lte` | number | Less than or equal | `body.count: { lte: 100 }` |
+| `in` | array | Value is in array | `status: { in: [200, 201] }` |
+| `contains` | string | String contains substring | `body.message: { contains: "success" }` |
+| `matches` | string | Regex match | `body.email: { matches: "^.+@.+$" }` |
+| `type` | string | Type check | `body.id: { type: string }` |
+| `exists` | boolean | Field exists check | `body.token: { exists: true }` |
+| `length` | number | Array or string length | `body.items: { length: 10 }` |
+
+Valid values for the `type` operator: `string`, `integer`, `number`, `boolean`, `array`, `object`, `null`.
+
+## AssertionResult type
+
+Each assertion produces an `AssertionResult` (from `packages/types/src/index.ts`):
+
+```typescript
+export interface AssertionResult {
+  path: string;      // The selector key (e.g. "body.id")
+  operator: string;  // The operator used (e.g. "type", "eq", "lt")
+  expected: unknown; // The expected value from the assert block
+  actual: unknown;   // The actual value extracted from the response
+  passed: boolean;   // Whether the assertion passed
+}
+```
+
+All `AssertionResult` objects for a request are collected in `ScriptedResponseData.assertionResults` and surfaced in the **Assertions** tab.
+
+<ResponseField name="path" type="string" required>
+  JSONPath-like selector that was evaluated (e.g. `status`, `body.user.id`).
+</ResponseField>
+
+<ResponseField name="operator" type="string" required>
+  The operator applied. `"eq"` is used for direct-value equality checks.
+</ResponseField>
+
+<ResponseField name="expected" type="unknown" required>
+  The expected value as written in the `assert` block.
+</ResponseField>
+
+<ResponseField name="actual" type="unknown" required>
+  The value extracted from the response at the given path.
+</ResponseField>
+
+<ResponseField name="passed" type="boolean" required>
+  `true` if the assertion passed, `false` otherwise.
+</ResponseField>
+
+<Note>
+  Assertion results are displayed in the **Assertions** tab in the response panel alongside the pass/fail count.
+</Note>
+
+<Tip>
+  Use declarative assertions for simple, data-driven checks like status codes and field presence. Use `ark.test()` in the `tests` field for complex or conditional logic that cannot be expressed as a single operator.
+</Tip>

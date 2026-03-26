@@ -1,0 +1,126 @@
+{
+  "projectType": "saas",
+  "projectName": "ApiArk",
+  "projectDescription": "A privacy-first desktop API client built with Tauri v2 — no login, no cloud, ~60 MB RAM — supporting REST, GraphQL, gRPC, WebSocket, SSE, and MQTT in one lightweight app.",
+  "theme": "luma",
+  "primaryColor": "#94cb04",
+  "lightColor": "#545454",
+  "darkColor": null,
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Get Started",
+            "pages": [
+              "introduction",
+              "installation",
+              "quickstart"
+            ]
+          },
+          {
+            "group": "Core Features",
+            "pages": [
+              "features/requests",
+              "features/collections",
+              "features/environments",
+              "features/authentication",
+              "features/protocols"
+            ]
+          },
+          {
+            "group": "Scripting & Testing",
+            "pages": [
+              "scripting/overview",
+              "scripting/pre-post-scripts",
+              "scripting/testing",
+              "scripting/collection-runner"
+            ]
+          },
+          {
+            "group": "Tools",
+            "pages": [
+              "tools/mock-servers",
+              "tools/monitors",
+              "tools/proxy-capture",
+              "tools/api-docs",
+              "tools/plugins"
+            ]
+          },
+          {
+            "group": "Integrations",
+            "pages": [
+              "integrations/import-export",
+              "integrations/ci-cd",
+              "integrations/git",
+              "integrations/ai-assistant"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Reference",
+        "groups": [
+          {
+            "group": "CLI",
+            "pages": [
+              "reference/cli/overview",
+              "reference/cli/run",
+              "reference/cli/import-export"
+            ]
+          },
+          {
+            "group": "Collection Schema",
+            "pages": [
+              "reference/schema/collection",
+              "reference/schema/request",
+              "reference/schema/environment",
+              "reference/schema/assertions"
+            ]
+          },
+          {
+            "group": "Configuration",
+            "pages": [
+              "reference/configuration/settings",
+              "reference/configuration/keyboard-shortcuts"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "Multi-protocol support: REST, GraphQL, gRPC, WebSocket, SSE, MQTT, Socket.IO",
+    "Local-first YAML storage — git-diffable, no proprietary formats",
+    "TypeScript scripting with pre/post-request scripts and ark.test() API",
+    "Collection Runner with data-driven testing (CSV/JSON) and JUnit/HTML reports",
+    "Local Mock Servers with Faker.js data, latency simulation, and error injection",
+    "Scheduled Monitoring with cron expressions, desktop notifications, and webhooks",
+    "Proxy Capture for local HTTP/HTTPS traffic inspection and replay",
+    "Plugin System supporting JavaScript and WASM extensions",
+    "AI Assistant for natural language to request generation and auto-test creation",
+    "Import from Postman, Insomnia, Bruno, Hoppscotch, OpenAPI, HAR, and cURL",
+    "~60 MB RAM usage and <2s cold startup, built on Tauri v2 (not Electron)",
+    "Response Diff for side-by-side comparison across runs"
+  ],
+  "publicApiSurface": [
+    "apiark run <collection> [--env] [--data] [--iterations] [--reporter] [--output]",
+    "apiark import <file> [--output] [--format]",
+    "apiark export <collection> --format [--output]",
+    "ark.test(name, fn) — scripting test API",
+    "ark.expect(value) — assertion API (Chai-style)",
+    "ark.env.set(key, value) — set environment variable in scripts",
+    "ark.env.get(key) — get environment variable in scripts",
+    "ark.response.json() — parse response body as JSON",
+    "ark.response.status — HTTP status code",
+    "ark.response.headers — response headers object",
+    "AuthConfig — discriminated union: none | bearer | basic | api-key | oauth2 | digest | aws-v4 | ntlm | jwt-bearer | saml",
+    "SendRequestParams — full request params type",
+    "ResponseData — response shape with status, headers, cookies, body, timeMs, sizeBytes",
+    "CollectionNode — tree node type: collection | folder | request",
+    "RunConfig / RunSummary — collection runner types",
+    "MockServerConfig / MockServerStatus — local mock server types",
+    "MonitorConfig / MonitorStatus — scheduler/monitor types"
+  ]
+}

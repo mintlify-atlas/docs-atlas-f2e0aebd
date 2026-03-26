@@ -1,0 +1,204 @@
+---
+title: Requests
+description: Create, configure, and send HTTP requests in ApiArk — with full control over headers, body, auth, and response inspection.
+---
+
+Every request in ApiArk is a tab in the editor. You can have multiple requests open at once, each saved as a `.yaml` file in your collection directory.
+
+## HTTP methods
+
+ApiArk supports all standard HTTP methods:
+
+<CardGroup cols={4}>
+  <Card title="GET" icon="arrow-down">
+    Retrieve a resource
+  </Card>
+  <Card title="POST" icon="plus">
+    Create a resource
+  </Card>
+  <Card title="PUT" icon="pencil">
+    Replace a resource
+  </Card>
+  <Card title="PATCH" icon="wrench">
+    Partially update a resource
+  </Card>
+  <Card title="DELETE" icon="trash">
+    Remove a resource
+  </Card>
+  <Card title="HEAD" icon="eye">
+    Fetch headers only
+  </Card>
+  <Card title="OPTIONS" icon="settings">
+    Query supported methods
+  </Card>
+</CardGroup>
+
+Select the method from the dropdown to the left of the URL bar before sending.
+
+## URL and query params
+
+Enter the full URL in the address bar at the top of the request editor. You can include query parameters directly in the URL or add them as key-value pairs in the **Params** tab — ApiArk merges them before sending.
+
+```yaml
+# In your request YAML
+url: "{{baseUrl}}/api/users"
+params:
+  page: "1"
+  limit: "20"
+```
+
+Each param row has an enabled toggle, so you can temporarily disable a parameter without deleting it.
+
+## Path variables
+
+Use `{{variableName}}` syntax anywhere in the URL to reference environment variables or collection-level defaults:
+
+```yaml
+url: "{{baseUrl}}/api/users/{{userId}}/posts"
+```
+
+ApiArk resolves these at send time from your active environment. You can also define path variable values directly in the **Path Variables** panel for the current request without modifying your environment.
+
+<Note>
+  Dynamic built-in variables are available anywhere `{{...}}` syntax is accepted. See [dynamic variables](#dynamic-variables) below.
+</Note>
+
+## Headers
+
+Add request headers in the **Headers** tab as key-value pairs. Common headers like `Content-Type` are added automatically when you select a body type, but you can override or remove them.
+
+```yaml
+headers:
+  Content-Type: application/json
+  X-Request-ID: "{{$uuid}}"
+  Authorization: Bearer {{accessToken}}
+```
+
+## Request body
+
+Select a body type from the **Body** tab. The editor adapts to the selected type.
+
+<Tabs>
+  <Tab title="JSON">
+    The Monaco editor provides syntax highlighting and formatting for JSON bodies.
+
+    ```yaml
+    body:
+      type: json
+      content: |
+        {
+          "name": "{{userName}}",
+          "email": "{{userEmail}}"
+        }
+    ```
+
+    ApiArk automatically sets `Content-Type: application/json` when this body type is selected.
+  </Tab>
+  <Tab title="Form data">
+    Add fields as key-value pairs. Each field can be a text value or a file upload — set `valueType` to `file` and provide the local file path as the value.
+
+    ```yaml
+    body:
+      type: form-data
+    ```
+
+    Use the form-data table in the UI to add fields. File fields open a native file picker.
+  </Tab>
+  <Tab title="Raw">
+    Send any text as-is. Useful for plain text, CSV, or custom formats where no special encoding is needed.
+
+    ```yaml
+    body:
+      type: raw
+      content: |
+        key1=value1&key2=value2
+    ```
+  </Tab>
+  <Tab title="URL-encoded">
+    Encodes fields as `application/x-www-form-urlencoded`. Add fields as key-value pairs in the table.
+
+    ```yaml
+    body:
+      type: urlencoded
+    ```
+  </Tab>
+  <Tab title="XML">
+    Syntax-highlighted XML editor. ApiArk sets `Content-Type: application/xml` automatically.
+
+    ```yaml
+    body:
+      type: xml
+      content: |
+        <user>
+          <name>{{userName}}</name>
+        </user>
+    ```
+  </Tab>
+  <Tab title="Binary">
+    Upload a file as the raw request body. Select the file using the file picker in the UI.
+
+    ```yaml
+    body:
+      type: binary
+    ```
+  </Tab>
+</Tabs>
+
+The supported body types are: `json`, `xml`, `form-data`, `urlencoded`, `raw`, `binary`, and `none`.
+
+## Cookies
+
+ApiArk automatically sends and stores cookies based on your collection defaults (`sendCookies`, `storeCookies`). For a specific request, you can override cookies directly in the YAML or via the **Cookies** tab in the editor:
+
+```yaml
+cookies:
+  session: "manual-value"
+```
+
+Per-request cookie overrides take precedence over the managed cookie jar for that request.
+
+## Response
+
+After sending a request, the response panel shows:
+
+| Field | Description |
+|---|---|
+| **Status** | HTTP status code and status text (e.g., `201 Created`) |
+| **Time** | Total round-trip time in milliseconds |
+| **Size** | Response body size in bytes |
+| **Headers** | All response headers as key-value pairs |
+| **Cookies** | Cookies returned by the server (`name`, `value`, `domain`, `path`, `expires`, `httpOnly`, `secure`) |
+| **Body** | Formatted response body with syntax highlighting |
+
+If the response body is very large, ApiArk shows a truncated preview and provides the full response in a temporary file you can open externally.
+
+## Response diff
+
+ApiArk can compare responses across runs. After receiving a response, use the **Diff** panel to compare it against a previous run stored in request history. Differences are highlighted inline.
+
+<Tip>
+  Response diff is useful when debugging regressions — send the same request before and after a code change and see exactly what changed in the output.
+</Tip>
+
+## Dynamic variables
+
+These built-in variables are resolved fresh each time you send a request:
+
+| Variable | Description |
+|---|---|
+| `{{$uuid}}` | Random UUID v4 |
+| `{{$timestamp}}` | Unix timestamp (seconds) |
+| `{{$timestampMs}}` | Unix timestamp (milliseconds) |
+| `{{$isoTimestamp}}` | ISO 8601 timestamp |
+| `{{$randomInt}}` | Random integer 0–1000 |
+| `{{$randomFloat}}` | Random float 0–1 |
+| `{{$randomString}}` | Random 16-character alphanumeric string |
+| `{{$randomEmail}}` | Random email address |
+
+Use them anywhere `{{...}}` syntax is accepted — URLs, headers, body, params, and auth fields.
+
+```yaml
+headers:
+  X-Request-ID: "{{$uuid}}"
+  X-Timestamp: "{{$isoTimestamp}}"
+```

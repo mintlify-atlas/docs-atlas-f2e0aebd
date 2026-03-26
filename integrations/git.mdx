@@ -1,0 +1,78 @@
+---
+title: Git integration
+description: ApiArk collections are plain YAML files in a directory — standard git diff, commit, and merge all work without any special tooling.
+---
+
+ApiArk stores every request as an individual `.yaml` file and every collection as a directory. This is a deliberate design choice: standard git tooling works without plugins, wrappers, or custom diff drivers.
+
+## Why ApiArk is git-friendly
+
+- Every request is a separate file — one commit per change, readable diffs
+- Collections are directories — folder structure is visible in the git tree
+- No binary formats, no opaque JSON blobs, no database exports
+- Merge conflicts are rare: concurrent changes to different request files never conflict
+
+## What gets committed
+
+| Path | Committed | Notes |
+|---|---|---|
+| `.apiark/apiark.yaml` | Yes | Collection name, version, and defaults |
+| `.apiark/environments/*.yaml` | Yes | Variable names and non-secret values |
+| `.apiark/.env` | **No** | Secret values — gitignored by default |
+| `**/*.yaml` (requests) | Yes | All request files |
+
+<Warning>
+  ApiArk generates a `.gitignore` inside `.apiark/` that excludes the `.env` file. Never commit `.apiark/.env` — it contains your secret variable values.
+</Warning>
+
+The environment YAML files are safe to commit. They list which variable names are secrets, but store no secret values.
+
+## Reading diffs
+
+Because requests are plain YAML, a changed request looks like any other text diff:
+
+```diff
+# users/create-user.yaml
+-  url: "{{baseUrl}}/api/users"
++  url: "{{baseUrl}}/api/v2/users"
+```
+
+This makes pull request reviews straightforward — reviewers can see exactly which endpoints changed, what headers were added, or how assertions were updated, without any special tooling.
+
+## Git panel
+
+ApiArk includes a built-in Git panel so you can manage commits without leaving the app.
+
+To open it: **View → Git panel**
+
+The panel shows:
+
+- **Modified** — request files with uncommitted changes
+- **Staged** — files staged for the next commit
+- **Untracked** — new request files not yet tracked by git
+
+You can stage files, write a commit message, and push directly from the panel.
+
+<Note>
+  ApiArk uses libgit2 under the hood for all Git operations. No external `git` binary is required.
+</Note>
+
+## Branching workflow
+
+Because requests are files, you can use the same branching strategies you use for code:
+
+- Create a feature branch when designing a new set of endpoints
+- Open a pull request to review the request changes with your team
+- Merge when the API contract is agreed on
+
+Since each request is its own file, two teammates can add requests to the same folder on separate branches and merge without conflict.
+
+## Merge conflicts
+
+Merge conflicts can only occur if two branches modify the **same line of the same request file** at the same time. Because each request is a separate file:
+
+- Changes to different requests never conflict
+- Adding new requests to the same folder never conflicts
+- Renaming or reorganizing folders may conflict if both branches do it simultaneously
+
+When a conflict does occur, it appears in the standard git conflict format inside the YAML file and can be resolved with any git merge tool.

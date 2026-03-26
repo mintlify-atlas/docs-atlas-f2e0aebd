@@ -1,0 +1,131 @@
+---
+title: Pre & post-request scripts
+description: Execute JavaScript before a request is sent or after a response is received — to set variables, extract data, and chain requests together.
+---
+
+Pre and post-request scripts let you run code around each request. They are defined as fields in your request YAML and execute inside a sandboxed **QuickJS** runtime.
+
+<Warning>
+  Scripts run in a sandboxed QuickJS environment with a 32 MB memory limit and 1 MB stack limit. They have no access to the filesystem and cannot make outbound network calls.
+</Warning>
+
+## Pre-request scripts
+
+The `preRequestScript` field runs before ApiArk sends the request. Use it to compute values, set environment variables, or prepare auth tokens.
+
+### Common use cases
+
+- Generate a dynamic value and inject it into a variable
+- Compute a timestamp or signature for a header
+- Set a token that expires frequently
+
+### Example: dynamic username
+
+This example from the ApiArk schema generates a unique username on every send:
+
+```typescript
+ark.env.set("userName", `User_${Date.now()}`);
+```
+
+Because `ark.env.set()` runs before the request is sent, `{{userName}}` in the request body or URL will resolve to the freshly generated value.
+
+### Example: timestamp header
+
+```typescript
+ark.env.set("requestTimestamp", new Date().toISOString());
+```
+
+Then reference it in your headers:
+
+```yaml
+headers:
+  X-Request-Timestamp: "{{requestTimestamp}}"
+```
+
+## Post-response scripts
+
+The `postResponseScript` field runs after ApiArk receives the response. Use it to extract values from the response body and make them available to subsequent requests.
+
+### Common use cases
+
+- Save a newly created resource ID for use in the next request
+- Capture an auth token returned by a login endpoint
+- Log response details for debugging
+
+### Example: extract and save an ID
+
+This example from the ApiArk schema reads the response body and saves the returned `id` to an environment variable:
+
+```typescript
+const body = ark.response.json();
+if (body.id) ark.env.set("createdUserId", body.id);
+```
+
+Subsequent requests can now use `{{createdUserId}}` in their URL or body.
+
+### Example: read headers and status
+
+```javascript
+var status = ark.response.status;
+var location = ark.response.headers["location"];
+
+console.log("Status:", status);
+if (location) {
+  ark.env.set("resourceLocation", location);
+}
+```
+
+## Accessing the response in scripts
+
+The following properties are available on `ark.response` in both `postResponseScript` and `tests`:
+
+| Property / method | Description |
+|---|---|
+| `ark.response.json()` | Parse the response body as JSON |
+| `ark.response.text()` | Return the response body as a raw string |
+| `ark.response.status` | HTTP status code (number) |
+| `ark.response.statusText` | HTTP status text (e.g., `"OK"`) |
+| `ark.response.headers` | Response headers as a key-value object |
+| `ark.response.body` | Raw response body string |
+| `ark.response.time` | Response time in milliseconds |
+| `ark.response.size` | Response body size in bytes |
+
+<Note>
+  `ark.response` is not available in `preRequestScript` — the request has not been sent yet at that point.
+</Note>
+
+## YAML placement
+
+Both script fields sit alongside your request definition. Here is a complete example showing all three script fields together:
+
+```yaml
+name: Create User
+method: POST
+url: "{{baseUrl}}/api/users"
+
+headers:
+  Content-Type: application/json
+
+body:
+  type: json
+  content: |
+    {
+      "name": "{{userName}}",
+      "email": "{{userEmail}}"
+    }
+
+preRequestScript: |
+  ark.env.set("userName", `User_${Date.now()}`);
+
+postResponseScript: |
+  const body = ark.response.json();
+  if (body.id) ark.env.set("createdUserId", body.id);
+
+tests: |
+  ark.test("should return created user", () => {
+    const body = ark.response.json();
+    ark.expect(body).to.have.property("id");
+  });
+```
+
+All three fields accept multi-line strings using the YAML `|` block scalar syntax.

@@ -1,0 +1,92 @@
+---
+title: apiark import & export
+description: Import collections from Postman, Insomnia, and OpenAPI, or export to Postman and OpenAPI formats.
+---
+
+## Import
+
+### Synopsis
+
+```bash
+apiark import <file> [options]
+```
+
+### Description
+
+`apiark import` converts a collection file from another tool into ApiArk's YAML format. Supported source formats are `postman`, `insomnia`, and `openapi`. If `--format` is omitted, ApiArk inspects the file contents to detect the format automatically.
+
+### Arguments
+
+<ParamField path="file" type="string" required>
+  Path to the file to import.
+</ParamField>
+
+### Options
+
+<ParamField query="--output" type="string">
+  Short: `-o`. Target directory for the imported collection. Defaults to the current directory if not specified.
+</ParamField>
+
+<ParamField query="--format" type="string">
+  Short: `-f`. Source format of the file being imported. Accepted values: `postman`, `insomnia`, `openapi`. When omitted, ApiArk detects the format from the file contents.
+</ParamField>
+
+### Format auto-detection
+
+When `--format` is not provided, ApiArk reads the file contents and infers the source format. Explicit `--format` is only needed when auto-detection produces incorrect results.
+
+### Examples
+
+```bash
+# Auto-detect format
+apiark import postman-collection.json
+
+# Explicit format with output directory
+apiark import openapi-spec.yaml --format openapi --output ./my-collection
+
+# Import Insomnia export
+apiark import insomnia-export.json --format insomnia --output ./my-collection
+```
+
+---
+
+## Export
+
+### Synopsis
+
+```bash
+apiark export <collection> --format <format> [options]
+```
+
+### Description
+
+`apiark export` converts an ApiArk collection directory to Postman or OpenAPI format. If `--output` is not specified, the result is printed to stdout.
+
+### Arguments
+
+<ParamField path="collection" type="string" required>
+  Path to the collection directory to export.
+</ParamField>
+
+### Options
+
+<ParamField query="--format" type="string" required>
+  Short: `-f`. Export format. Accepted values: `postman`, `openapi`.
+</ParamField>
+
+<ParamField query="--output" type="string">
+  Short: `-o`. Output file path. If not specified, the exported content is printed to stdout.
+</ParamField>
+
+### Examples
+
+```bash
+# Export to OpenAPI spec
+apiark export ./my-collection --format openapi --output api-spec.yaml
+
+# Export to Postman collection
+apiark export ./my-collection --format postman --output postman-collection.json
+
+# Print to stdout
+apiark export ./my-collection --format openapi
+```

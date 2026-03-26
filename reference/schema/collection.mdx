@@ -1,0 +1,157 @@
+---
+title: Collection schema
+description: Reference for the apiark.yaml collection config file and directory structure.
+---
+
+ApiArk collections are plain directories. Your filesystem structure is your collection structure — no import, no sync, no lock-in.
+
+## Directory structure
+
+```
+my-api-project/
+├── .apiark/
+│   ├── apiark.yaml           # Collection configuration (required)
+│   ├── .env                  # Secrets (gitignored)
+│   ├── .gitignore
+│   └── environments/
+│       ├── development.yaml
+│       ├── staging.yaml
+│       └── production.yaml
+├── users/
+│   ├── _folder.yaml          # Folder config (optional)
+│   ├── get-all-users.yaml    # Request file
+│   └── create-user.yaml
+└── products/
+    └── list-products.yaml
+```
+
+## `.apiark/apiark.yaml` — collection config
+
+The `apiark.yaml` file at the root of `.apiark/` identifies the directory as an ApiArk collection and defines collection-wide defaults.
+
+```yaml
+name: My API
+version: 1
+defaults:
+  sendCookies: true       # Auto-send stored cookies (default: true)
+  storeCookies: true      # Auto-store response cookies (default: true)
+  persistCookies: false   # Persist cookies across app restarts (default: false)
+  auth:                   # Default auth for all requests (optional)
+    type: bearer
+    token: "{{token}}"
+```
+
+### Fields
+
+<ParamField path="name" type="string" required>
+  Collection display name shown in the sidebar.
+</ParamField>
+
+<ParamField path="version" type="integer" default="1">
+  Schema version used for migration. Increment when the on-disk format changes.
+</ParamField>
+
+<ParamField path="defaults.sendCookies" type="boolean" default="true">
+  Automatically send stored cookies with every request.
+</ParamField>
+
+<ParamField path="defaults.storeCookies" type="boolean" default="true">
+  Automatically store cookies received in responses.
+</ParamField>
+
+<ParamField path="defaults.persistCookies" type="boolean" default="false">
+  Persist the cookie jar to disk so cookies survive app restarts.
+</ParamField>
+
+<ParamField path="defaults.auth" type="AuthConfig">
+  Default auth applied to all requests in the collection. Any request or folder can override this. See [Auth config](/reference/schema/request#auth-config) for the full type reference.
+</ParamField>
+
+### JSON schema
+
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": ["name"],
+  "properties": {
+    "name": { "type": "string", "description": "Collection display name" },
+    "version": { "type": "integer", "default": 1, "description": "Schema version for migration" },
+    "defaults": {
+      "type": "object",
+      "properties": {
+        "sendCookies": { "type": "boolean", "default": true },
+        "storeCookies": { "type": "boolean", "default": true },
+        "persistCookies": { "type": "boolean", "default": false },
+        "auth": { "$ref": "#/$defs/AuthConfig" }
+      }
+    }
+  }
+}
+```
+
+## `_folder.yaml` — folder config
+
+Place a `_folder.yaml` file in any subdirectory to control display name, auth override, and child ordering. The file is optional; folders without one use the directory name as display name.
+
+```yaml
+name: User Endpoints
+auth:
+  type: bearer
+  token: "{{userToken}}"
+order:
+  - get-all-users
+  - create-user
+  - update-user
+```
+
+### Fields
+
+<ParamField path="name" type="string">
+  Folder display name shown in the sidebar. Defaults to the directory name.
+</ParamField>
+
+<ParamField path="auth" type="AuthConfig">
+  Folder-level auth override. Applies to all requests in this folder unless a request specifies its own auth. See [Auth config](/reference/schema/request#auth-config).
+</ParamField>
+
+<ParamField path="order" type="string[]">
+  Ordered list of child filenames **without** the `.yaml` extension. Filenames not listed appear after the ordered items in filesystem order.
+</ParamField>
+
+### JSON schema
+
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "name": { "type": "string", "description": "Folder display name" },
+    "auth": { "$ref": "#/$defs/AuthConfig" },
+    "order": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Ordered list of child filenames (without .yaml extension)"
+    }
+  }
+}
+```
+
+## App data files
+
+These files live in `~/.apiark/` and are global to the app — they are not part of any collection and are not synced via git.
+
+| File | Format | Description |
+|------|--------|-------------|
+| `settings.json` | JSON | App preferences (theme, proxy, timeouts, certificates) |
+| `state.json` | JSON | Open tabs, window positions |
+| `data.db` | SQLite | Request history |
+| `license.key` | JWT | License key (reserved for future use) |
+| `logs/` | Text | Daily rotating log files |
+| `crash-reports/` | JSON | Local crash reports |
+| `trash/` | YAML | Soft-deleted requests and folders |
+| `cookies/` | JSON | Persisted cookie jars (per-collection) |
+
+<Note>
+  All app data files are standard human-readable formats. You can inspect, edit, or back up any of them with standard tools.
+</Note>

@@ -1,0 +1,104 @@
+---
+title: Environment schema
+description: Reference for environment YAML files.
+---
+
+Environment files live in `.apiark/environments/`. Each file defines a set of variables and secret references that are interpolated into requests at send time.
+
+## Example
+
+```yaml
+name: Development
+variables:
+  baseUrl: http://localhost:3000
+  apiKey: dev-key-12345
+secrets:
+  - accessToken
+  - adminToken
+```
+
+## Fields
+
+<ParamField path="name" type="string" required>
+  Environment display name shown in the environment selector.
+</ParamField>
+
+<ParamField path="variables" type="object">
+  Variable key-value pairs (`Record<string, string>`). These are stored in plain text in the YAML file and are safe to commit to version control.
+</ParamField>
+
+<ParamField path="secrets" type="string[]">
+  List of variable names whose values are sensitive. Secret names are declared here; their values are stored in `.apiark/.env`, not in the YAML file.
+</ParamField>
+
+<ParamField path="scope" type="string">
+  Optional scope designation. `"shared"` environments are intended for team use (committed to git); `"personal"` environments are for local overrides.
+</ParamField>
+
+## Secrets handling
+
+Secret values are never stored in the environment YAML. Instead, the `secrets` array lists the variable names, and the corresponding values are kept in `.apiark/.env`.
+
+```yaml
+# environments/development.yaml
+secrets:
+  - accessToken
+  - adminToken
+```
+
+```env
+# .apiark/.env  (gitignored)
+accessToken=eyJhbGci...
+adminToken=sk-admin-...
+```
+
+The `.env` file uses standard `KEY=VALUE` syntax.
+
+<Warning>
+  `.apiark/.env` must be listed in `.gitignore`. ApiArk creates this entry automatically when you open a collection, but verify it is present before committing.
+</Warning>
+
+## Variable resolution priority
+
+When the same variable name appears in multiple places, later sources override earlier ones:
+
+<Steps>
+  <Step title="Root .env file">
+    The `.env` file at the collection root directory (next to `.apiark/`) is loaded first.
+  </Step>
+  <Step title="Environment YAML variables">
+    Variables defined in the active environment's `variables` map override root `.env` values.
+  </Step>
+  <Step title=".apiark/.env secrets">
+    Secret values from `.apiark/.env` override environment `variables`.
+  </Step>
+  <Step title="Runtime overrides">
+    Values set by scripts via `ark.env.set()` during a request run take the highest precedence.
+  </Step>
+</Steps>
+
+## JSON schema
+
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": ["name"],
+  "properties": {
+    "name": { "type": "string" },
+    "variables": {
+      "type": "object",
+      "additionalProperties": { "type": "string" }
+    },
+    "secrets": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Variable names whose values are in .env"
+    }
+  }
+}
+```
+
+<Note>
+  Commit `environments/*.yaml` to your repository for team consistency. Keep `.apiark/.env` gitignored so secret values never leave the local machine.
+</Note>

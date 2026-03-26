@@ -1,0 +1,61 @@
+---
+title: CLI overview
+description: Run API collections, import, and export from the command line with the apiark CLI.
+---
+
+The `apiark` CLI lets you run collections, import from other tools, and export to standard formats — all without opening the desktop app. It is designed for CI/CD pipelines and automated workflows.
+
+## Installation
+
+<CodeGroup>
+
+```bash npm
+npm install -g @apiark/cli
+```
+
+```bash brew
+brew tap berbicanes/apiark
+brew install apiark
+```
+
+</CodeGroup>
+
+<Note>
+  The desktop app also ships with the `apiark` binary. You can add it to your `PATH` to use the same binary for both desktop and CLI workflows.
+</Note>
+
+## Available commands
+
+| Command | Description |
+|---------|-------------|
+| `apiark run` | Run a collection or folder |
+| `apiark import` | Import from Postman, Insomnia, OpenAPI, and more |
+| `apiark export` | Export to Postman or OpenAPI format |
+
+## Getting help
+
+```bash
+apiark --help
+apiark run --help
+```
+
+## Exit codes
+
+| Code | Meaning |
+|------|---------|
+| `0` | All tests passed |
+| `1` | Some tests failed |
+| `2` | Collection not found |
+| `3` | Invalid configuration |
+| `4` | Network error |
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="apiark run" icon="play" href="/reference/cli/run">
+    Run a collection sequentially with environment selection, data-driven testing, and multiple reporter formats.
+  </Card>
+  <Card title="apiark import & export" icon="arrow-right-arrow-left" href="/reference/cli/import-export">
+    Convert between ApiArk collections and Postman, Insomnia, or OpenAPI formats.
+  </Card>
+</CardGroup>

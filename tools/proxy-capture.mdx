@@ -1,0 +1,92 @@
+---
+title: Proxy capture
+description: Intercept and inspect HTTP and HTTPS traffic from any browser or app, then replay captured requests directly in ApiArk.
+---
+
+Proxy capture starts a local intercepting HTTP/HTTPS proxy. You configure your browser or mobile app to route traffic through it, and ApiArk records every request and response in the Proxy panel. From there you can inspect headers and bodies, compare requests over time, or save any captured request into a collection with one click.
+
+Common use cases:
+- Reverse-engineer a third-party API by inspecting real traffic
+- Capture browser requests to generate a collection automatically
+- Debug what your mobile app is actually sending
+- Replay a captured request with modified headers or body
+
+## Setting up proxy capture
+
+<Steps>
+  <Step title="Open settings">
+    Go to **Settings → Proxy**.
+  </Step>
+  <Step title="Enable proxy capture">
+    Toggle **Enable proxy capture** on. Note the port shown (default: `8888`).
+  </Step>
+  <Step title="Install the CA certificate">
+    Click **Install CA Certificate** to download the ApiArk root certificate. Install it as a trusted CA in your browser or operating system so ApiArk can decrypt HTTPS traffic without triggering certificate errors.
+
+    <AccordionGroup>
+      <Accordion title="Chrome / Edge">
+        Open **Settings → Privacy and security → Security → Manage certificates**. Import the certificate into the **Trusted Root Certification Authorities** store.
+      </Accordion>
+      <Accordion title="Firefox">
+        Open **Settings → Privacy & Security → Certificates → View Certificates → Authorities**. Import the certificate and check **Trust this CA to identify websites**.
+      </Accordion>
+      <Accordion title="macOS system trust">
+        Open **Keychain Access**, drag the certificate into **System**, then double-click it and set **SSL** to **Always Trust**.
+      </Accordion>
+      <Accordion title="iOS (physical device)">
+        Send the certificate to the device (AirDrop or email), install it via **Settings → General → VPN & Device Management**, then enable full trust under **Settings → General → About → Certificate Trust Settings**.
+      </Accordion>
+    </AccordionGroup>
+  </Step>
+  <Step title="Configure your browser or app">
+    Set the HTTP and HTTPS proxy to `localhost` with the port from step 2 (e.g., `localhost:8888`).
+  </Step>
+  <Step title="Browse normally">
+    Requests appear in the **Proxy** panel in real time as you use the browser or app.
+  </Step>
+  <Step title="Import or replay a captured request">
+    Click any captured request to open its details. Use **Open in tab** to load it into a new ApiArk request tab, or **Save to collection** to add it to an existing collection.
+  </Step>
+</Steps>
+
+## Proxy configuration
+
+ApiArk uses the `ProxyConfig` type to represent proxy settings:
+
+<ParamField path="url" type="string" required>
+  The proxy URL, for example `http://localhost:8888`. This is set automatically when you enable proxy capture.
+</ParamField>
+
+<ParamField path="username" type="string">
+  Username for proxy authentication. Only needed if you are routing through an upstream authenticated proxy.
+</ParamField>
+
+<ParamField path="password" type="string">
+  Password for proxy authentication.
+</ParamField>
+
+## Upstream proxy (corporate networks)
+
+If your machine is behind a corporate proxy, configure `AppSettings.proxyUrl` in **Settings → Proxy → Upstream proxy**. ApiArk forwards outbound requests through that proxy, and proxy capture traffic is chained through it as well.
+
+```
+Your app → ApiArk proxy (localhost:8888) → Corporate proxy → Internet
+```
+
+## HTTPS interception
+
+ApiArk generates a unique local CA certificate on first launch and stores it in your app data directory. This certificate is used to dynamically issue certificates for each HTTPS host, enabling ApiArk to decrypt traffic for inspection.
+
+<Warning>
+  The CA certificate gives ApiArk the ability to read all HTTPS traffic passing through the proxy. Only use proxy capture on networks and with apps you own or have permission to inspect.
+</Warning>
+
+Once you no longer need proxy capture, turn it off in **Settings → Proxy** and remove the CA certificate from your browser's trust store.
+
+## Filtering and searching captured traffic
+
+Use the search bar at the top of the Proxy panel to filter by URL, method, or status code. You can also filter by host to focus on a single API.
+
+## Replay and editing
+
+When you open a captured request in a tab, all headers, parameters, body, and auth are pre-populated from the original request. Edit any field and send to see how the API responds to the modified request.

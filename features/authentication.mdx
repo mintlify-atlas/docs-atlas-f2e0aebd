@@ -1,0 +1,258 @@
+---
+title: Authentication
+description: Configure authentication for requests in ApiArk — from simple bearer tokens to OAuth 2.0, AWS Signature V4, SAML, and more.
+---
+
+ApiArk supports 11 authentication types. Auth can be set at three levels, with more specific levels overriding broader ones:
+
+1. **Collection default** — set in `.apiark/apiark.yaml` under `defaults.auth`
+2. **Folder default** — set in `_folder.yaml`, overrides the collection default
+3. **Per-request** — set in the request file or the Auth tab, overrides folder and collection defaults
+
+Select **Inherit** in the request Auth tab to fall through to the folder or collection default.
+
+## Auth types
+
+<AccordionGroup>
+  <Accordion title="None">
+    No authentication is added to the request. Use this to explicitly send a request without any auth, even if a collection or folder default is set.
+
+    ```yaml
+    auth:
+      type: none
+    ```
+  </Accordion>
+
+  <Accordion title="Bearer token">
+    Adds an `Authorization: Bearer <token>` header to the request.
+
+    ```yaml
+    auth:
+      type: bearer
+      token: "{{accessToken}}"
+    ```
+
+    | Field | Description |
+    |---|---|
+    | `token` | The bearer token value. Supports `{{variables}}`. |
+  </Accordion>
+
+  <Accordion title="Basic auth">
+    Encodes `username:password` in Base64 and adds it as an `Authorization: Basic <encoded>` header.
+
+    ```yaml
+    auth:
+      type: basic
+      username: admin
+      password: "{{adminPass}}"
+    ```
+
+    | Field | Description |
+    |---|---|
+    | `username` | The username. Supports `{{variables}}`. |
+    | `password` | The password. Store in a secret for security. |
+  </Accordion>
+
+  <Accordion title="API key">
+    Sends an API key either as a request header or as a query parameter.
+
+    ```yaml
+    # As a header
+    auth:
+      type: api-key
+      key: X-API-Key
+      value: "{{apiKey}}"
+      addTo: header
+
+    # As a query parameter
+    auth:
+      type: api-key
+      key: api_key
+      value: "{{apiKey}}"
+      addTo: query
+    ```
+
+    | Field | Description |
+    |---|---|
+    | `key` | Header name or query parameter name |
+    | `value` | The API key value. Supports `{{variables}}`. |
+    | `addTo` | Where to attach the key: `header` or `query` |
+  </Accordion>
+
+  <Accordion title="OAuth 2.0">
+    Manages OAuth 2.0 token acquisition and refresh. See the [OAuth 2.0 section](#oauth-20) below for details on each grant type.
+
+    ```yaml
+    auth:
+      type: oauth2
+      grantType: authorization_code
+      authUrl: https://auth.example.com/authorize
+      tokenUrl: https://auth.example.com/token
+      clientId: my-app
+      clientSecret: ""
+      scope: read write
+      usePkce: true
+    ```
+
+    | Field | Description |
+    |---|---|
+    | `grantType` | `authorization_code`, `client_credentials`, `implicit`, or `password` |
+    | `authUrl` | Authorization endpoint URL |
+    | `tokenUrl` | Token endpoint URL |
+    | `clientId` | OAuth client identifier |
+    | `clientSecret` | OAuth client secret (leave empty for public clients) |
+    | `scope` | Space-separated list of requested scopes |
+    | `callbackUrl` | Redirect URI registered with the auth server |
+    | `username` | Resource owner username (password grant only) |
+    | `password` | Resource owner password (password grant only) |
+    | `usePkce` | Enable PKCE for authorization code flow |
+  </Accordion>
+
+  <Accordion title="Digest auth">
+    Implements HTTP Digest authentication (RFC 7616). ApiArk handles the challenge-response handshake automatically.
+
+    ```yaml
+    auth:
+      type: digest
+      username: admin
+      password: "{{digestPass}}"
+    ```
+
+    | Field | Description |
+    |---|---|
+    | `username` | The username |
+    | `password` | The password. Store in a secret for security. |
+  </Accordion>
+
+  <Accordion title="AWS Signature V4">
+    Signs requests using AWS Signature Version 4, required for direct calls to AWS services.
+
+    ```yaml
+    auth:
+      type: aws-v4
+      accessKey: "{{awsAccessKey}}"
+      secretKey: "{{awsSecretKey}}"
+      region: us-east-1
+      service: execute-api
+      sessionToken: "{{awsSessionToken}}"
+    ```
+
+    | Field | Description |
+    |---|---|
+    | `accessKey` | AWS access key ID |
+    | `secretKey` | AWS secret access key |
+    | `region` | AWS region (e.g., `us-east-1`) |
+    | `service` | AWS service name (e.g., `s3`, `execute-api`) |
+    | `sessionToken` | Temporary session token (leave empty for long-term credentials) |
+  </Accordion>
+
+  <Accordion title="NTLM">
+    Authenticates using Windows NT LAN Manager, typically for corporate APIs and SharePoint.
+
+    ```yaml
+    auth:
+      type: ntlm
+      username: "{{ntlmUser}}"
+      password: "{{ntlmPass}}"
+      domain: CORP
+      workstation: MY-PC
+    ```
+
+    | Field | Description |
+    |---|---|
+    | `username` | Windows username |
+    | `password` | Windows password |
+    | `domain` | NT domain name |
+    | `workstation` | Workstation name |
+  </Accordion>
+
+  <Accordion title="JWT Bearer">
+    Generates a signed JWT and sends it as a bearer token. ApiArk signs the token locally using your secret.
+
+    ```yaml
+    auth:
+      type: jwt-bearer
+      secret: "{{jwtSecret}}"
+      algorithm: HS256
+      payload: |
+        { "sub": "{{userId}}", "iss": "apiark" }
+      headerPrefix: Bearer
+    ```
+
+    | Field | Description |
+    |---|---|
+    | `secret` | Signing secret or private key |
+    | `algorithm` | JWT algorithm (e.g., `HS256`, `RS256`) |
+    | `payload` | JSON payload to encode in the token |
+    | `headerPrefix` | Authorization header prefix (default: `Bearer`) |
+  </Accordion>
+
+  <Accordion title="SAML">
+    Authenticates using a SAML assertion, for enterprise SSO integrations.
+
+    ```yaml
+    auth:
+      type: saml
+      idpUrl: https://idp.example.com/sso
+      entityId: https://myapp.example.com
+      assertionConsumerUrl: https://myapp.example.com/acs
+      certificate: "{{samlCert}}"
+      nameIdFormat: urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress
+      samlToken: "{{samlToken}}"
+    ```
+
+    | Field | Description |
+    |---|---|
+    | `idpUrl` | Identity provider SSO URL |
+    | `entityId` | Service provider entity ID |
+    | `assertionConsumerUrl` | ACS URL where SAML responses are posted |
+    | `certificate` | IdP signing certificate |
+    | `nameIdFormat` | SAML NameID format URI |
+    | `samlToken` | Pre-acquired SAML token |
+  </Accordion>
+</AccordionGroup>
+
+## OAuth 2.0
+
+OAuth 2.0 in ApiArk supports four grant types:
+
+| Grant type | Use case |
+|---|---|
+| `authorization_code` | Web apps and native apps where the user logs in interactively. Supports PKCE for public clients. |
+| `client_credentials` | Server-to-server calls where no user is involved. Uses `clientId` and `clientSecret`. |
+| `implicit` | Legacy browser-based flows. Avoid for new integrations. |
+| `password` | Direct resource owner credential grant. Requires `username` and `password`. |
+
+For `authorization_code`, ApiArk opens a browser window to complete the authorization flow and captures the callback automatically. Click **Get Token** in the Auth tab to start the flow.
+
+<Tip>
+  Enable `usePkce: true` for authorization code flows with public clients (those without a client secret). PKCE prevents authorization code interception attacks.
+</Tip>
+
+## Collection-level default auth
+
+Set a default that applies to every request in the collection unless overridden:
+
+```yaml
+# .apiark/apiark.yaml
+name: My API
+version: 1
+defaults:
+  auth:
+    type: bearer
+    token: "{{token}}"
+```
+
+## Folder-level auth
+
+Override the collection default for a specific folder:
+
+```yaml
+# users/_folder.yaml
+name: User Endpoints
+auth:
+  type: bearer
+  token: "{{userToken}}"
+```
+
+All requests in the `users/` folder will use `{{userToken}}` instead of the collection-level `{{token}}`.

@@ -1,0 +1,121 @@
+---
+title: CI/CD integration
+description: Run ApiArk API tests in any CI/CD pipeline using the ApiArk CLI — includes ready-to-use GitHub Actions and GitLab CI examples.
+---
+
+ApiArk collections are plain files on your filesystem, which makes them a natural fit for CI/CD pipelines. Use the ApiArk CLI to run collections, assert against responses, and report results in any environment that can run Node.js.
+
+## Install the CLI
+
+```bash
+npm install -g @apiark/cli
+```
+
+## GitHub Actions
+
+<CodeGroup>
+
+```yaml reusable workflow
+# .github/workflows/api-tests.yml
+name: API Tests
+
+on: [push, pull_request]
+
+jobs:
+  api-tests:
+    uses: berbicanes/apiark/.github/workflows/apiark-action.yml@main
+    with:
+      collection: ./my-api-collection
+      environment: staging
+      reporter: junit
+```
+
+```yaml manual setup
+# .github/workflows/api-tests.yml
+name: API Tests
+
+on: [push, pull_request]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install ApiArk CLI
+        run: npm install -g @apiark/cli
+
+      - name: Run tests
+        run: apiark run ./my-collection --env production --reporter json
+
+      - name: Run with JUnit output
+        run: apiark run ./my-collection --reporter junit > results.xml
+
+      - name: Upload results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: results.xml
+```
+
+</CodeGroup>
+
+## GitLab CI
+
+```yaml
+# .gitlab-ci.yml
+api-tests:
+  image: node:20
+  script:
+    - npm install -g @apiark/cli
+    - apiark run ./my-collection --env staging --reporter junit > results.xml
+  artifacts:
+    reports:
+      junit: results.xml
+```
+
+<Note>
+  Any CI system that can run Node.js can run the ApiArk CLI — Jenkins, CircleCI, Bitbucket Pipelines, Azure DevOps, and others all work without additional configuration.
+</Note>
+
+## Exit codes
+
+The CLI exits with a code that reflects the run result. Use these codes to control whether your CI step passes or fails.
+
+| Code | Meaning |
+|------|---------|
+| `0` | All tests passed |
+| `1` | Some tests failed |
+| `2` | Collection not found |
+| `3` | Invalid configuration |
+| `4` | Network error |
+
+<Note>
+  Exit code `1` (tests failed) causes the CI step to fail automatically — no extra configuration needed. If all requests pass, the CLI exits with `0` and the step succeeds.
+</Note>
+
+## CLI reference
+
+```bash
+# Run all requests in a collection
+apiark run <collection-path>
+
+# With environment
+apiark run <collection-path> --env <name>
+
+# With data file for data-driven testing
+apiark run <collection-path> --data data.csv
+
+# Multiple iterations
+apiark run <collection-path> --iterations 5
+
+# Output formats
+apiark run <collection-path> --reporter json
+apiark run <collection-path> --reporter junit
+apiark run <collection-path> --reporter html
+```
+
+<Tip>
+  Use `--reporter junit` to get built-in test result reporting in both GitHub Actions and GitLab CI. JUnit XML is natively understood by both platforms and surfaces pass/fail counts directly in the pull request or merge request UI.
+</Tip>

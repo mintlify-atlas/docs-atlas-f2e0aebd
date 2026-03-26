@@ -1,0 +1,183 @@
+---
+title: Protocols
+description: ApiArk supports 7 protocols in one desktop app — REST, GraphQL, gRPC, WebSocket, SSE, MQTT, and Socket.IO.
+---
+
+ApiArk is built for multi-protocol API work. Switching the protocol on a request changes the editor UI automatically — you see exactly the controls that are relevant for the selected protocol, nothing more.
+
+<CardGroup cols={2}>
+  <Card title="REST / HTTP" icon="globe">
+    Standard HTTP methods (GET, POST, PUT, PATCH, DELETE, HEAD, OPTIONS), headers, request body, query params, and full response inspection.
+  </Card>
+  <Card title="GraphQL" icon="diagram-project">
+    Query, mutation, and subscription support with a built-in schema explorer. Introspect schemas from live endpoints or upload a schema file.
+  </Card>
+  <Card title="gRPC" icon="server">
+    Unary, server streaming, client streaming, and bidirectional streaming calls. Load service definitions from a `.proto` file or use server reflection.
+  </Card>
+  <Card title="WebSocket" icon="arrows-left-right">
+    Connect to WebSocket servers, send text or binary messages, and view the full message timeline with direction, type, size, and timestamp.
+  </Card>
+  <Card title="SSE" icon="tower-broadcast">
+    Connect to Server-Sent Events streams and view incoming events with their type, data, and ID as they arrive.
+  </Card>
+  <Card title="MQTT" icon="rss">
+    Publish and subscribe to MQTT topics. Connect to brokers, manage subscriptions, and view message history.
+  </Card>
+  <Card title="Socket.IO" icon="plug">
+    Connect to Socket.IO servers, emit named events with payloads, and receive events in real time.
+  </Card>
+</CardGroup>
+
+<Note>
+  Selecting a protocol from the protocol picker in the request tab immediately updates the editor. For example, switching from HTTP to gRPC replaces the body editor with a service/method selector and proto loader.
+</Note>
+
+## REST / HTTP
+
+The default protocol. Supports all seven HTTP methods, request headers, all body types (`json`, `xml`, `form-data`, `urlencoded`, `raw`, `binary`, `none`), query params, path variables, cookies, and per-request auth.
+
+See the [Requests](/features/requests) page for full details.
+
+## GraphQL
+
+The GraphQL editor provides a query editor, variables panel, and operation name field. You can introspect a live endpoint to explore the schema or provide a schema JSON file for offline use.
+
+```graphql
+query GetUser($id: ID!) {
+  user(id: $id) {
+    id
+    name
+    email
+  }
+}
+```
+
+Variables are entered as JSON in the **Variables** panel:
+
+```json
+{
+  "id": "{{userId}}"
+}
+```
+
+Subscriptions keep the connection open and stream results into the response panel as events arrive.
+
+## gRPC
+
+gRPC requests are built around services and methods discovered from a `.proto` file or server reflection.
+
+<Tabs>
+  <Tab title="Service and method types">
+    ApiArk models gRPC services and methods using these types:
+
+    ```typescript
+    interface GrpcServiceInfo {
+      name: string;
+      fullName: string;
+      methods: GrpcMethodInfo[];
+    }
+
+    interface GrpcMethodInfo {
+      name: string;
+      fullName: string;
+      inputType: string;
+      outputType: string;
+      callType: "unary" | "serverStreaming" | "clientStreaming" | "bidiStreaming";
+    }
+    ```
+
+    The `callType` determines how the request editor behaves:
+
+    | Call type | Description |
+    |---|---|
+    | `unary` | Single request, single response |
+    | `serverStreaming` | Single request, stream of responses |
+    | `clientStreaming` | Stream of requests, single response |
+    | `bidiStreaming` | Stream of requests and responses simultaneously |
+  </Tab>
+  <Tab title="Loading a proto">
+    In the gRPC editor, click **Load Proto** and select your `.proto` file. ApiArk parses the file and populates the service and method dropdowns.
+
+    For servers that support gRPC reflection (such as those using `tonic` with the reflection service enabled), click **Use Reflection** instead. ApiArk queries the server for its service definitions automatically.
+  </Tab>
+  <Tab title="Sending a request">
+    After selecting a service and method, enter your request message as JSON in the editor. ApiArk serializes it to the correct protobuf format before sending.
+
+    Add gRPC metadata (equivalent to HTTP headers) in the **Metadata** table. The response panel shows the status code, status message, response body, and any response metadata.
+  </Tab>
+</Tabs>
+
+## WebSocket
+
+<Tabs>
+  <Tab title="Connecting">
+    WebSocket connections use these parameters:
+
+    ```typescript
+    interface WsConnectParams {
+      url: string;          // WebSocket URL (ws:// or wss://)
+      headers: KeyValuePair[];  // HTTP upgrade headers
+      protocols: string[];  // WebSocket subprotocol list
+    }
+    ```
+
+    Enter the URL, add any handshake headers, and optionally specify subprotocols. Click **Connect** to open the connection.
+  </Tab>
+  <Tab title="Messages">
+    Each message in the timeline is represented as:
+
+    ```typescript
+    interface WsMessage {
+      connectionId: string;
+      direction: "sent" | "received";
+      content: string;
+      messageType: "text" | "binary";
+      timestamp: string;
+      sizeBytes: number;
+    }
+    ```
+
+    The message timeline shows all sent and received messages with their direction, type, size, and timestamp. Type your message in the input field at the bottom and press **Send** (or `Ctrl+Enter`).
+  </Tab>
+</Tabs>
+
+## SSE (Server-Sent Events)
+
+<Tabs>
+  <Tab title="Connecting">
+    SSE connections use these parameters:
+
+    ```typescript
+    interface SseConnectParams {
+      url: string;
+      headers: KeyValuePair[];
+    }
+    ```
+
+    Enter the endpoint URL and any required headers (such as `Authorization`). Click **Connect** — ApiArk holds the connection open and streams events as they arrive.
+  </Tab>
+  <Tab title="Events">
+    Each incoming event is represented as:
+
+    ```typescript
+    interface SseEvent {
+      connectionId: string;
+      eventType: string;  // The "event:" field, defaults to "message"
+      data: string;       // The "data:" field
+      id?: string;        // The "id:" field (if present)
+      timestamp: string;
+    }
+    ```
+
+    The event list shows the event type, data, optional ID, and the time it was received. You can filter events by type.
+  </Tab>
+</Tabs>
+
+## MQTT
+
+Connect to an MQTT broker by entering the broker URL (e.g., `mqtt://localhost:1883` or `mqtts://broker.example.com:8883`). After connecting, add topic subscriptions in the **Subscriptions** panel and publish messages to any topic from the **Publish** panel. Incoming messages appear in the message log with their topic, payload, and timestamp.
+
+## Socket.IO
+
+Connect to a Socket.IO server by entering its URL. After connecting, use the **Emit** panel to send named events with JSON payloads, and the event log shows all incoming events. You can subscribe to specific event names to filter the log.

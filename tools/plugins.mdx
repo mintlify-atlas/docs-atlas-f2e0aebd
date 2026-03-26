@@ -1,0 +1,146 @@
+---
+title: Plugins
+description: Extend ApiArk with JavaScript or WASM plugins to add custom request transforms, response processing, auth providers, and more.
+---
+
+Plugins let you extend ApiArk beyond its built-in functionality. You can transform requests before they are sent, process responses, react to app or collection lifecycle events, and provide custom authentication.
+
+ApiArk supports two plugin runtimes:
+
+<CardGroup cols={2}>
+  <Card title="JavaScript plugins" icon="js">
+    Written in JavaScript, executed in an embedded **QuickJS** runtime. Each hook is a named function exported from the entry file.
+  </Card>
+  <Card title="WASM plugins" icon="cube">
+    WebAssembly modules for plugins that require native performance or are compiled from Rust, C, or other languages.
+  </Card>
+</CardGroup>
+
+## Plugin structure
+
+A plugin is a **directory** containing:
+
+1. A `plugin.json` manifest
+2. An entry file (JavaScript or `.wasm`)
+
+### `plugin.json` manifest
+
+```json plugin.json
+{
+  "name": "my-plugin",
+  "version": "1.0.0",
+  "description": "A short description of what this plugin does",
+  "author": "Your Name",
+  "runtime": "js",
+  "entry": "index.js",
+  "hooks": ["preRequest", "postResponse"]
+}
+```
+
+| Field | Type | Description |
+|---|---|---|
+| `name` | string | Unique plugin identifier |
+| `version` | string | Plugin version |
+| `description` | string | Human-readable description |
+| `author` | string | Plugin author |
+| `runtime` | `"js"` or `"wasm"` | Execution runtime |
+| `entry` | string | Entry point file path (relative to plugin directory) |
+| `hooks` | string[] | Hooks this plugin subscribes to |
+
+### JavaScript entry file
+
+The entry file must export hook functions. ApiArk calls the corresponding export for each hook:
+
+```javascript index.js
+// Called before the request is sent
+function preRequest(context) {
+  // Add a custom header
+  context.headers["X-Plugin-Version"] = "1.0.0";
+  return context;
+}
+
+// Called after the response is received
+function postResponse(context) {
+  // context contains the response
+  return context;
+}
+
+// Called once when the app starts
+function onStart(context) {
+  return context;
+}
+
+// Called when a collection is opened
+function onCollectionOpen(context) {
+  return context;
+}
+```
+
+ApiArk calls `exports.hookName(context)` if defined, otherwise falls back to the global `hookName` function.
+
+## Available hooks
+
+<AccordionGroup>
+  <Accordion title="preRequest">
+    Called before ApiArk sends a request. The `context` object contains the request (method, URL, headers, body). Return the modified context to change what gets sent.
+
+    Declare in `plugin.json` hooks: `"preRequest"`
+
+    Use this hook to inject auth tokens, sign requests, add custom headers, or rewrite URLs.
+  </Accordion>
+  <Accordion title="postResponse">
+    Called after ApiArk receives a response. The `context` object contains the response (status, headers, body, timing). Return the modified context to transform the response.
+
+    Declare in `plugin.json` hooks: `"postResponse"`
+
+    Use this hook to decrypt response bodies or normalize response formats.
+  </Accordion>
+  <Accordion title="onStart">
+    Called once when the ApiArk app starts. Use it for initialization — loading config, setting global variables, etc.
+
+    Declare in `plugin.json` hooks: `"onStart"`
+  </Accordion>
+  <Accordion title="onCollectionOpen">
+    Called whenever the user opens a collection. The `context` object contains the collection path.
+
+    Declare in `plugin.json` hooks: `"onCollectionOpen"`
+  </Accordion>
+  <Accordion title="authProvider">
+    Provides a custom authentication scheme. ApiArk calls this hook before sending a request that uses the plugin-provided auth type.
+
+    Declare in `plugin.json` hooks: `"authProvider"`
+  </Accordion>
+</AccordionGroup>
+
+## Installing plugins
+
+<Steps>
+  <Step title="Prepare the plugin directory">
+    Make sure your plugin directory has a valid `plugin.json` at the root and the entry file it references.
+  </Step>
+  <Step title="Open the plugin manager">
+    Go to **Settings → Plugins**.
+  </Step>
+  <Step title="Install the plugin">
+    Click **Install Plugin** and select the plugin's directory from your filesystem. ApiArk copies it into `~/.apiark/plugins/`.
+  </Step>
+  <Step title="Enable the plugin">
+    Toggle the plugin on. It takes effect immediately — no restart required.
+  </Step>
+</Steps>
+
+You can enable and disable individual plugins at any time from the plugin manager.
+
+## Plugin logs
+
+The plugin manager shows a log panel for each installed plugin. Runtime errors, `console.log` output, and hook execution times all appear here. Use it to debug plugins during development.
+
+## Plugin marketplace
+
+<Note>
+  ApiArk does not have an official plugin marketplace yet. Plugins are currently shared by the community via GitHub repositories and the [GitHub Discussions](https://github.com/berbicanes/apiark/discussions) board.
+</Note>
+
+<Warning>
+  Only install plugins from sources you trust. A plugin runs inside a sandboxed QuickJS environment but still has access to request data, response data, and environment variables. Review plugin source code before installing.
+</Warning>

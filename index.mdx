@@ -1,97 +1,75 @@
 ---
-title: "Introduction"
-description: "Welcome to the new home for your documentation"
+title: "ApiArk Documentation"
+description: "The privacy-first API client that respects your RAM, your data, and your Git workflow. No login. No cloud. No bloat."
 ---
 
-## Setting up
+ApiArk is a desktop API platform built with Tauri v2. It uses ~60 MB of RAM, starts in under 2 seconds, and stores everything as plain YAML files you can commit to Git. No account required, no cloud sync, no telemetry unless you opt in.
 
-Get your documentation site up and running in minutes.
-
-<Card
-  title="Start here"
-  icon="rocket"
-  href="/quickstart"
-  horizontal
->
-  Follow our three step quickstart guide.
-</Card>
-
-## Make it yours
-
-Design a docs site that looks great and empowers your users.
-
-<Columns cols={2}>
-  <Card
-    title="Edit locally"
-    icon="pen-to-square"
-    href="/development"
-  >
-    Edit your docs locally and preview them in real time.
+<CardGroup cols={2}>
+  <Card title="Installation" icon="download" href="/installation">
+    Download ApiArk for Windows, macOS, or Linux — or install via Homebrew, Scoop, or APT.
   </Card>
-  <Card
-    title="Customize your site"
-    icon="palette"
-    href="/essentials/settings"
-  >
-    Customize the design and colors of your site to match your brand.
+  <Card title="Quickstart" icon="rocket" href="/quickstart">
+    Send your first request and set up a collection in under 5 minutes.
   </Card>
-    <Card
-    title="Set up navigation"
-    icon="map"
-    href="/essentials/navigation"
-  >
-    Organize your docs to help users find what they need and succeed with your product.
+  <Card title="Core Features" icon="star" href="/features/requests">
+    Explore requests, collections, environments, authentication, and multi-protocol support.
   </Card>
-  <Card
-    title="API documentation"
-    icon="terminal"
-    href="/api-reference/introduction"
-  >
-    Auto-generate API documentation from OpenAPI specifications.
+  <Card title="CLI Reference" icon="terminal" href="/reference/cli/overview">
+    Run collections in CI/CD, import from other tools, and export to standard formats.
   </Card>
-</Columns>
+</CardGroup>
 
-## Create beautiful pages
+## What makes ApiArk different
 
-Everything you need to create world-class documentation.
+<CardGroup cols={2}>
+  <Card title="Multi-protocol" icon="network-wired" href="/features/protocols">
+    REST, GraphQL, gRPC, WebSocket, SSE, MQTT, and Socket.IO — all in one app.
+  </Card>
+  <Card title="Local-first storage" icon="folder-open" href="/features/collections">
+    Every request is a `.yaml` file. Collections are directories. Git-diffable by default.
+  </Card>
+  <Card title="TypeScript scripting" icon="code" href="/scripting/overview">
+    Pre/post-request scripts with `ark.test()`, `ark.expect()`, and environment mutations.
+  </Card>
+  <Card title="Local mock servers" icon="server" href="/tools/mock-servers">
+    Spin up mock APIs from your collections — with Faker.js data and latency simulation.
+  </Card>
+  <Card title="Scheduled monitors" icon="clock" href="/tools/monitors">
+    Cron-based API monitoring with desktop notifications and webhook alerts. Runs locally.
+  </Card>
+  <Card title="Plugin system" icon="puzzle-piece" href="/tools/plugins">
+    Extend ApiArk with JavaScript or WASM plugins.
+  </Card>
+</CardGroup>
 
-<Columns cols={2}>
-  <Card
-    title="Write with MDX"
-    icon="pen-fancy"
-    href="/essentials/markdown"
-  >
-    Use MDX to style your docs pages.
-  </Card>
-  <Card
-    title="Code samples"
-    icon="code"
-    href="/essentials/code"
-  >
-    Add sample code to demonstrate how to use your product.
-  </Card>
-  <Card
-    title="Images"
-    icon="image"
-    href="/essentials/images"
-  >
-    Display images and other media.
-  </Card>
-  <Card
-    title="Reusable snippets"
-    icon="recycle"
-    href="/essentials/reusable-snippets"
-  >
-    Write once and reuse across your docs.
-  </Card>
-</Columns>
+## Get started
 
-## Need inspiration?
+<Steps>
+  <Step title="Download ApiArk">
+    Visit the [installation page](/installation) to download the installer for your platform, or use a package manager like Homebrew, Scoop, or APT.
+  </Step>
+  <Step title="Open or create a collection">
+    Launch ApiArk and open an existing folder as a collection, or create a new one. Each collection is just a directory of YAML files.
+  </Step>
+  <Step title="Send your first request">
+    Create a new request tab, enter a URL, and click **Send**. Read the [quickstart guide](/quickstart) for a full walkthrough.
+  </Step>
+  <Step title="Import from Postman or another tool">
+    Already using another API client? Use `Ctrl+K` → "Import Collection" to import from Postman, Insomnia, Bruno, OpenAPI, HAR, or cURL. See [import & export](/integrations/import-export).
+  </Step>
+</Steps>
 
-<Card
-  title="See complete examples"
-  icon="stars"
-  href="https://mintlify.com/customers"
->
-  Browse our showcase of exceptional documentation sites.
-</Card>
+## Performance at a glance
+
+| Metric | ApiArk | Postman | Bruno |
+|--------|--------|---------|-------|
+| RAM at idle | ~60 MB | 300–800 MB | 150–300 MB |
+| Cold startup | \<2s | 10–30s | 3–8s |
+| Binary size | ~20 MB | ~300 MB | ~150 MB |
+| Account required | No | Yes | No |
+| Git-friendly | Yes (YAML) | No | Yes (.bru) |
+
+<Note>
+  ApiArk is built on Tauri v2 — a Rust backend with the native OS webview — not Electron. This is the reason for the dramatic difference in memory usage and startup time.
+</Note>

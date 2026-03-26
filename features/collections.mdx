@@ -1,0 +1,140 @@
+---
+title: Collections
+description: Organize your API requests into collections — plain YAML files in a directory you own, fully compatible with Git.
+---
+
+A collection in ApiArk is a directory on your filesystem. There is no database, no proprietary container format, and no cloud sync required. Your filesystem structure is your collection structure.
+
+> If you decide to leave ApiArk, your data leaves with you. Every file is a standard format. Every database is open. We will never make it hard to switch away.
+
+## Directory structure
+
+Here is a typical collection layout:
+
+```
+my-api-project/
+├── .apiark/
+│   ├── apiark.yaml           # Collection configuration (required)
+│   ├── .env                  # Secrets (gitignored)
+│   ├── .gitignore
+│   └── environments/
+│       ├── development.yaml
+│       ├── staging.yaml
+│       └── production.yaml
+├── users/
+│   ├── _folder.yaml          # Folder config (optional)
+│   ├── get-all-users.yaml    # Request file
+│   └── create-user.yaml
+└── products/
+    └── list-products.yaml
+```
+
+Each `.yaml` file in the directory (except config files) is a request. Subdirectories become folders in the sidebar.
+
+## Opening a collection
+
+<Steps>
+  <Step title="Open a folder">
+    Go to **File → Open Folder** (or press `Ctrl+O` / `Cmd+O`) and select your collection directory.
+  </Step>
+  <Step title="ApiArk reads the directory">
+    ApiArk scans the directory for `.yaml` request files and builds the sidebar tree. The `.apiark/apiark.yaml` file identifies the root as a collection.
+  </Step>
+  <Step title="Select an environment">
+    Use the environment picker in the toolbar to activate an environment. Variables from the active environment are used when you send requests.
+  </Step>
+</Steps>
+
+## Creating a collection
+
+<Steps>
+  <Step title="Create a directory">
+    Create a new directory anywhere on your filesystem — name it after your project.
+  </Step>
+  <Step title="Open it in ApiArk">
+    Use **File → Open Folder** to open the new directory. ApiArk will prompt you to initialize it as a collection.
+  </Step>
+  <Step title="ApiArk creates .apiark/">
+    ApiArk writes the `.apiark/` directory with a starter `apiark.yaml`, an empty `.env`, and a `.gitignore` that excludes `.env`.
+  </Step>
+</Steps>
+
+## Folders
+
+Subdirectories inside a collection become folders in the sidebar. To customize a folder's display name, auth defaults, or request ordering, add an optional `_folder.yaml` file inside the subdirectory:
+
+```yaml
+# users/_folder.yaml
+name: User Endpoints
+auth:
+  type: bearer
+  token: "{{userToken}}"
+order:
+  - get-all-users
+  - create-user
+  - update-user
+```
+
+The `order` field lists request filenames (without the `.yaml` extension) in the order you want them to appear. Requests not listed appear after the ordered ones, alphabetically. The `auth` field sets a default auth for all requests in this folder, overriding the collection-level default.
+
+## Collection config
+
+The `.apiark/apiark.yaml` file at the root of your collection controls collection-level settings:
+
+```yaml
+name: My API
+version: 1
+defaults:
+  sendCookies: true       # Auto-send stored cookies (default: true)
+  storeCookies: true      # Auto-store response cookies (default: true)
+  persistCookies: false   # Persist cookies across app restarts (default: false)
+  auth:                   # Default auth for all requests (optional)
+    type: bearer
+    token: "{{token}}"
+```
+
+| Field | Default | Description |
+|---|---|---|
+| `name` | — | Display name shown in the sidebar header |
+| `version` | `1` | Schema version for future migrations |
+| `defaults.sendCookies` | `true` | Send stored cookies automatically |
+| `defaults.storeCookies` | `true` | Store cookies from responses |
+| `defaults.persistCookies` | `false` | Keep cookies after the app is closed |
+| `defaults.auth` | — | Auth applied to every request unless overridden |
+
+## Git workflow
+
+<Tip>
+  Because every request is a plain YAML file, your collection works perfectly with Git. Commit request changes, review diffs in pull requests, and merge conflicts the same way you would with code.
+</Tip>
+
+ApiArk generates a `.gitignore` inside `.apiark/` that excludes the `.env` file (which contains secret values). The environment YAML files — which list which variables are secrets but not their values — are safe to commit.
+
+Example request file for reference:
+
+```yaml
+# users/create-user.yaml
+name: Create User
+method: POST
+url: "{{baseUrl}}/api/users"
+
+headers:
+  Content-Type: application/json
+
+auth:
+  type: bearer
+  token: "{{adminToken}}"
+
+body:
+  type: json
+  content: |
+    {
+      "name": "{{userName}}",
+      "email": "{{userEmail}}"
+    }
+
+assert:
+  status: 201
+  body.id: { type: string }
+  responseTime: { lt: 2000 }
+```

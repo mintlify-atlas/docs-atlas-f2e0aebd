@@ -1,0 +1,89 @@
+---
+title: Environments
+description: Manage environment variables and secrets in ApiArk — stored as plain YAML files, with secrets kept out of version control.
+---
+
+Environments are named sets of variables and secrets that you switch between to target different backends — for example, `development`, `staging`, and `production`. The active environment's variables are substituted into request URLs, headers, body, and auth fields at send time.
+
+## Environment file format
+
+Each environment is a `.yaml` file inside `.apiark/environments/`:
+
+```yaml
+# .apiark/environments/development.yaml
+name: Development
+variables:
+  baseUrl: http://localhost:3000
+  apiKey: dev-key-12345
+secrets:
+  - accessToken
+  - adminToken
+```
+
+The `secrets` array lists variable names whose values are sensitive. The names are stored in the YAML file, but the actual values live in `.apiark/.env`, which is gitignored.
+
+## Secrets
+
+Secret values are stored separately in `.apiark/.env`:
+
+```env
+accessToken=eyJhbGci...
+adminToken=sk-admin-...
+```
+
+<Warning>
+  Never commit `.apiark/.env` to version control. ApiArk generates a `.gitignore` that excludes it automatically. The environment YAML files are safe to commit — they only reference secret names, not values.
+</Warning>
+
+When you open ApiArk and activate an environment, it reads both the YAML variables and the `.env` secrets and makes all of them available as `{{variableName}}` in your requests.
+
+## Variable resolution priority
+
+If the same variable name is defined in multiple places, ApiArk resolves it using this priority order (later entries win):
+
+1. Root `.env` file (in the collection root directory)
+2. Environment YAML `variables`
+3. `.apiark/.env` secrets
+4. Runtime overrides (set by scripts via `ark.env.set()`)
+
+<Info>
+  Runtime overrides set by pre-request or post-response scripts are in-memory only. They last for the current session and do not modify any files on disk.
+</Info>
+
+## Switching environments
+
+Use the environment picker in the toolbar at the top of the app to switch between environments. The active environment name is displayed at all times. Switching environments takes effect immediately — the next request you send will use the new environment's variables.
+
+## Environment scope
+
+Environments have an optional `scope` field:
+
+| Scope | Behavior |
+|---|---|
+| `shared` | Visible to all team members (safe to commit) |
+| `personal` | Local only — not intended for sharing |
+
+This field is informational in the current release and helps you keep track of which environments contain personal credentials.
+
+## Dynamic variables
+
+In addition to your own environment variables, ApiArk provides built-in dynamic variables that generate fresh values each time a request is sent. Use them with the same `{{$name}}` syntax:
+
+| Variable | Description |
+|---|---|
+| `{{$uuid}}` | Random UUID v4 |
+| `{{$timestamp}}` | Unix timestamp (seconds) |
+| `{{$timestampMs}}` | Unix timestamp (milliseconds) |
+| `{{$isoTimestamp}}` | ISO 8601 timestamp |
+| `{{$randomInt}}` | Random integer 0–1000 |
+| `{{$randomFloat}}` | Random float 0–1 |
+| `{{$randomString}}` | Random 16-character alphanumeric string |
+| `{{$randomEmail}}` | Random email address |
+
+Dynamic variables do not need to be defined in any environment file. They are always available.
+
+```yaml
+headers:
+  X-Request-ID: "{{$uuid}}"
+  X-Sent-At: "{{$isoTimestamp}}"
+```

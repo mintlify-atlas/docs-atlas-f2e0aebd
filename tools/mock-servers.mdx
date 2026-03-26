@@ -1,0 +1,111 @@
+---
+title: Mock servers
+description: Spin up a local HTTP server that serves mock responses from your collection — no cloud, no usage limits.
+---
+
+Mock servers let you create a fully functional HTTP API from your existing collection requests. ApiArk starts a local server on a port you choose and responds to incoming requests using the saved response data from your collection. No cloud service is involved — the server runs entirely on your machine.
+
+This is useful when you're building a frontend against an API that doesn't exist yet, or when you need a stable, repeatable environment for integration testing.
+
+## How mock servers work
+
+Each request in your collection becomes a `MockEndpoint`. ApiArk maps the request's method and URL path to a corresponding status code, response body, and content type. When a client hits that endpoint, ApiArk returns the stored response — optionally with artificial latency or injected errors.
+
+<Note>
+  Mock servers use **axum** (Rust) under the hood, so they handle concurrent connections efficiently even on developer hardware.
+</Note>
+
+## Starting a mock server
+
+<Steps>
+  <Step title="Open the Mock Servers panel">
+    Click **Mock Servers** in the left sidebar, or press `Ctrl+K` and search for "Mock Servers".
+  </Step>
+  <Step title="Select a collection">
+    Click **New Mock Server** and choose the collection you want to serve. ApiArk lists all collections currently open in your workspace.
+  </Step>
+  <Step title="Configure the server">
+    Set the port, optional latency, and optional error rate. See the [configuration reference](#configuration) below.
+  </Step>
+  <Step title="Start the server">
+    Click **Start**. ApiArk starts the server and displays the list of generated endpoints along with a real-time request log.
+  </Step>
+  <Step title="Send requests">
+    Point your frontend or HTTP client at `http://localhost:<port>`. Each matching endpoint returns its mock response.
+  </Step>
+</Steps>
+
+## Configuration
+
+These fields map directly to the `MockServerConfig` type.
+
+<ParamField path="collectionPath" type="string" required>
+  Path to the collection directory on disk. In the UI, you select this from a collection picker rather than entering the path manually.
+</ParamField>
+
+<ParamField path="port" type="number" required>
+  The port the mock server listens on, for example `3000`. Make sure the port is not already in use.
+</ParamField>
+
+<ParamField path="latencyMs" type="number" default="0">
+  Artificial delay added to every response, in milliseconds. Use this to simulate slow network conditions or a remote API. Set to `0` for no delay.
+</ParamField>
+
+<ParamField path="errorRate" type="number" default="0">
+  Fraction of requests (0.0–1.0) that should return a `500 Internal Server Error` instead of the normal mock response. For example, `0.1` causes roughly 10% of requests to fail. Use this to test your client's error-handling logic.
+</ParamField>
+
+## Endpoints
+
+Every request in the selected collection is exposed as a `MockEndpoint`:
+
+| Field | Description |
+|---|---|
+| `method` | HTTP method (GET, POST, PUT, etc.) |
+| `path` | URL path derived from the request's URL |
+| `status` | HTTP status code returned to clients |
+| `body` | Response body sent to clients |
+| `contentType` | `Content-Type` header on the response |
+
+The endpoint list is shown in the Mock Servers panel once the server is running. You can expand any endpoint to inspect its method, path, and response details.
+
+## Request log
+
+ApiArk displays a live `MockRequestLog` for every request that hits the server:
+
+| Field | Description |
+|---|---|
+| `method` | HTTP method of the incoming request |
+| `path` | Request path |
+| `status` | Status code that was returned |
+| `timeMs` | Time taken to handle the request |
+| `timestamp` | When the request arrived |
+
+The log updates in real time while the server is running. Use it to confirm your client is sending the right requests.
+
+## Dynamic data with Faker.js
+
+Response bodies can include [Faker.js](https://fakerjs.dev/) expressions to generate dynamic data on each request. Wrap expressions in double curly braces:
+
+```json
+{
+  "id": "{{faker.string.uuid}}",
+  "name": "{{faker.person.fullName}}",
+  "email": "{{faker.internet.email}}",
+  "createdAt": "{{faker.date.recent}}"
+}
+```
+
+ApiArk evaluates these expressions each time the endpoint is called, so every response contains fresh generated values.
+
+<Tip>
+  Store a request with a Faker.js body in your collection before creating the mock server. The mock server picks up the body exactly as saved.
+</Tip>
+
+## Multiple mock servers
+
+You can run multiple mock servers simultaneously, each on a different port. ApiArk tracks each server independently and shows its status, endpoint count, and request log in separate rows.
+
+## Stopping a mock server
+
+Click **Stop** next to a running server. The port is released immediately. You can restart the server at any time with the same or updated configuration.

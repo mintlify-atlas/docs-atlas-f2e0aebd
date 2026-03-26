@@ -1,0 +1,139 @@
+---
+title: Scripting overview
+description: Run JavaScript before and after each request to generate dynamic values, extract response data, and define test cases — all from within your request YAML.
+---
+
+ApiArk lets you attach JavaScript (or TypeScript-compatible syntax) scripts to any request. Scripts execute inside a sandboxed **QuickJS** runtime and have access to the `ark` global object, which exposes the request, response, environment variables, test helpers, and the standard `console` object.
+
+There are three places a script can live in a request YAML file:
+
+| Field | When it runs |
+|---|---|
+| `preRequestScript` | Before the request is sent |
+| `postResponseScript` | After the response is received |
+| `tests` | After the response, evaluated as test cases |
+
+## The `ark` global object
+
+Every script has access to `ark`. Here is what it exposes:
+
+### `ark.request`
+
+Available in `preRequestScript` only. Lets you inspect and modify the outgoing request before it is sent.
+
+| Property / method | Description |
+|---|---|
+| `ark.request.url` | Current request URL (string) |
+| `ark.request.method` | Current HTTP method (string) |
+| `ark.request.headers` | Request headers as a key-value object |
+| `ark.request.body` | Request body string (or null) |
+| `ark.request.setUrl(url)` | Set a new URL |
+| `ark.request.setMethod(method)` | Set the HTTP method |
+| `ark.request.setHeader(key, value)` | Add or overwrite a header |
+| `ark.request.removeHeader(key)` | Remove a header |
+| `ark.request.setBody(body)` | Set the raw request body string |
+
+<Note>
+  Calling any `set*` or `remove*` method in a `postResponseScript` or `tests` throws an error — requests cannot be modified after they are sent.
+</Note>
+
+### `ark.response`
+
+Available in `postResponseScript` and `tests`. Provides access to the response data.
+
+| Property / method | Type | Description |
+|---|---|---|
+| `ark.response.json()` | `() => unknown` | Parse the response body as JSON |
+| `ark.response.text()` | `() => string` | Return the response body as a raw string |
+| `ark.response.status` | `number` | HTTP status code |
+| `ark.response.statusText` | `string` | HTTP status text (e.g., `"OK"`) |
+| `ark.response.headers` | `object` | Response headers as a key-value object |
+| `ark.response.body` | `string` | Raw response body string |
+| `ark.response.time` | `number` | Response time in milliseconds |
+| `ark.response.size` | `number` | Response body size in bytes |
+
+### `ark.env`
+
+Read and write the current environment's variables at runtime. Changes are in-memory only and do not modify any files on disk.
+
+| Method | Description |
+|---|---|
+| `ark.env.get(key)` | Read a variable value |
+| `ark.env.set(key, value)` | Set a variable (value coerced to string) |
+| `ark.env.unset(key)` | Delete a variable for this session |
+| `ark.env.toObject()` | Return a copy of all current env variables |
+
+Variables set with `ark.env.set()` take the highest priority in the variable resolution order and are available to all subsequent requests in the same session.
+
+### `ark.globals`
+
+Works identically to `ark.env`, but scopes changes to global variables (shared across all collections in the app session):
+
+```javascript
+ark.globals.set("apiVersion", "v2");
+```
+
+### `ark.variables`
+
+Works identically to `ark.env`, but scopes changes to request-level variables:
+
+```javascript
+ark.variables.set("requestId", "req_123");
+```
+
+### `ark.test`
+
+Define a named test case. The function receives a name and a callback. Use inside the `tests` field.
+
+```javascript
+ark.test("should return created user", function() {
+  var body = ark.response.json();
+  ark.expect(body).to.have.property("id");
+});
+```
+
+Test results appear in the **Tests** tab of the response panel.
+
+### `ark.expect`
+
+Chai-style assertion helper. Use inside `ark.test()` callbacks.
+
+```javascript
+ark.expect(ark.response.status).to.equal(201);
+ark.expect(body.id).to.be.a("string");
+ark.expect(body.items).to.have.lengthOf(3);
+ark.expect(body).to.have.property("id");
+ark.expect(arr).to.include(2);
+ark.expect(42).to.not.equal(43);
+```
+
+### `console`
+
+The standard `console` object is available in all scripts. Output appears in the **Console** tab of the response panel.
+
+| Method | Description |
+|---|---|
+| `console.log(...args)` | Log a message at the `log` level |
+| `console.warn(...args)` | Log a message at the `warn` level |
+| `console.error(...args)` | Log a message at the `error` level |
+| `console.info(...args)` | Log a message at the `info` level |
+
+```javascript
+console.log("Status:", ark.response.status);
+console.warn("Response was slow:", ark.response.time + "ms");
+```
+
+## Console output
+
+After sending a request, open the **Console** tab in the response panel to see all log messages from your scripts. Each entry has a `level` (`log`, `warn`, `error`, or `info`) and a `message`. Use this for debugging without affecting test results.
+
+## Where to go next
+
+<CardGroup cols={2}>
+  <Card title="Pre & post-request scripts" icon="code" href="/scripting/pre-post-scripts">
+    Generate dynamic values before sending and extract data from responses.
+  </Card>
+  <Card title="Testing" icon="circle-check" href="/scripting/testing">
+    Write declarative assertions or JavaScript test cases for every request.
+  </Card>
+</CardGroup>

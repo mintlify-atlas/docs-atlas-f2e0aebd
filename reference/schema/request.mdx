@@ -1,0 +1,242 @@
+---
+title: Request schema
+description: Reference for the YAML format of individual request files.
+---
+
+Each request is a single YAML file anywhere in the collection directory tree (excluding `.apiark/`). The filename minus `.yaml` is the URL-friendly identifier; the `name` field is the display name.
+
+## Example
+
+```yaml
+name: Create User
+method: POST
+url: "{{baseUrl}}/api/users"
+description: Creates a new user account.
+
+headers:
+  Content-Type: application/json
+  X-Request-ID: "{{$uuid}}"
+
+params:
+  page: "1"
+  limit: "20"
+
+auth:
+  type: bearer
+  token: "{{adminToken}}"
+
+body:
+  type: json
+  content: |
+    {
+      "name": "{{userName}}",
+      "email": "{{userEmail}}"
+    }
+
+cookies:
+  session: "manual-value"
+
+assert:
+  status: 201
+  body.id: { type: string }
+  responseTime: { lt: 2000 }
+
+tests: |
+  ark.test("should return created user", () => {
+    const body = ark.response.json();
+    ark.expect(body).to.have.property("id");
+  });
+
+preRequestScript: |
+  ark.env.set("userName", `User_${Date.now()}`);
+
+postResponseScript: |
+  const body = ark.response.json();
+  if (body.id) ark.env.set("createdUserId", body.id);
+```
+
+## Fields
+
+<ParamField path="name" type="string" required>
+  Display name shown in the sidebar and response panel.
+</ParamField>
+
+<ParamField path="method" type="string" required>
+  HTTP method. One of: `GET`, `POST`, `PUT`, `PATCH`, `DELETE`, `HEAD`, `OPTIONS`.
+</ParamField>
+
+<ParamField path="url" type="string" required>
+  Request URL. Supports `{{variable}}` interpolation and [dynamic variables](#dynamic-variables).
+</ParamField>
+
+<ParamField path="protocol" type="string">
+  Protocol type. One of: `http`, `graphql`, `websocket`, `sse`, `grpc`, `mqtt`, `socketio`. Defaults to `http` when omitted.
+</ParamField>
+
+<ParamField path="description" type="string">
+  Human-readable description displayed in the request panel.
+</ParamField>
+
+<ParamField path="headers" type="object">
+  Header key-value pairs (`Record<string, string>`). Values support `{{variable}}` interpolation.
+</ParamField>
+
+<ParamField path="params" type="object">
+  Query parameter key-value pairs (`Record<string, string>`). Appended to the URL on send.
+</ParamField>
+
+<ParamField path="auth" type="AuthConfig">
+  Request-level auth override. Takes precedence over folder-level and collection-level auth. See [Auth config](#auth-config) below.
+</ParamField>
+
+<ParamField path="body.type" type="string">
+  Body content type. One of: `json`, `xml`, `form-data`, `urlencoded`, `raw`, `binary`, `none`.
+</ParamField>
+
+<ParamField path="body.content" type="string">
+  Body content as a string. For `json` and `xml` this is the raw text; for `form-data` and `urlencoded` it is URL-encoded or multipart data.
+</ParamField>
+
+<ParamField path="cookies" type="object">
+  Per-request cookie overrides (`Record<string, string>`). These are sent in addition to cookies managed by the cookie jar.
+</ParamField>
+
+<ParamField path="assert" type="object">
+  Declarative assertions block. Keys are JSONPath-like selectors; values are expected values or operator objects. See the [Assertions reference](/reference/schema/assertions).
+</ParamField>
+
+<ParamField path="tests" type="string">
+  JavaScript/TypeScript test code executed after the response is received. Use `ark.test()` and `ark.expect()` for assertions.
+</ParamField>
+
+<ParamField path="preRequestScript" type="string">
+  Script executed before the request is sent. Use `ark.env.set()` to set variables dynamically.
+</ParamField>
+
+<ParamField path="postResponseScript" type="string">
+  Script executed after the response is received. Use `ark.env.set()` to extract and store values from the response.
+</ParamField>
+
+## Auth config
+
+Auth is a discriminated union on the `type` field. It can be set at the collection, folder, or request level; more specific definitions override less specific ones.
+
+| Type | Required fields |
+|------|-----------------|
+| `none` | — |
+| `bearer` | `token` |
+| `basic` | `username`, `password` |
+| `api-key` | `key`, `value`, `addTo` (`header` or `query`) |
+| `oauth2` | `grantType`, `authUrl`, `tokenUrl`, `clientId`, `clientSecret`, `scope`, `callbackUrl`, `username`, `password`, `usePkce` |
+| `digest` | `username`, `password` |
+| `aws-v4` | `accessKey`, `secretKey`, `region`, `service`, `sessionToken` |
+| `ntlm` | `username`, `password`, `domain`, `workstation` |
+| `jwt-bearer` | `secret`, `algorithm`, `payload`, `headerPrefix` |
+| `saml` | `idpUrl`, `entityId`, `assertionConsumerUrl`, `certificate`, `nameIdFormat`, `samlToken` |
+
+### Examples
+
+<CodeGroup>
+
+```yaml Bearer
+auth:
+  type: bearer
+  token: "{{accessToken}}"
+```
+
+```yaml Basic
+auth:
+  type: basic
+  username: admin
+  password: "{{adminPass}}"
+```
+
+```yaml API key
+auth:
+  type: api-key
+  key: X-API-Key
+  value: "{{apiKey}}"
+  addTo: header
+```
+
+```yaml OAuth 2.0
+auth:
+  type: oauth2
+  grantType: authorization_code
+  authUrl: https://auth.example.com/authorize
+  tokenUrl: https://auth.example.com/token
+  clientId: my-app
+  clientSecret: ""
+  scope: read write
+  usePkce: true
+```
+
+</CodeGroup>
+
+## Dynamic variables
+
+Variables prefixed with `$` are resolved at send time. They can be used anywhere `{{variable}}` interpolation is supported.
+
+| Variable | Description |
+|----------|-------------|
+| `{{$uuid}}` | Random UUID v4 |
+| `{{$timestamp}}` | Unix timestamp (seconds) |
+| `{{$timestampMs}}` | Unix timestamp (milliseconds) |
+| `{{$isoTimestamp}}` | ISO 8601 timestamp |
+| `{{$randomInt}}` | Random integer 0–1000 |
+| `{{$randomFloat}}` | Random float 0–1 |
+| `{{$randomString}}` | Random 16-character alphanumeric string |
+| `{{$randomEmail}}` | Random email address |
+
+## JSON schema
+
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": ["name", "method", "url"],
+  "properties": {
+    "name": { "type": "string", "description": "Display name" },
+    "method": {
+      "type": "string",
+      "enum": ["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"]
+    },
+    "url": { "type": "string", "description": "Request URL (supports {{variables}})" },
+    "description": { "type": "string" },
+    "headers": {
+      "type": "object",
+      "additionalProperties": { "type": "string" },
+      "description": "Header key-value pairs"
+    },
+    "params": {
+      "type": "object",
+      "additionalProperties": { "type": "string" },
+      "description": "Query parameter key-value pairs"
+    },
+    "auth": { "$ref": "#/$defs/AuthConfig" },
+    "body": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["json", "xml", "form-data", "urlencoded", "raw", "binary", "none"]
+        },
+        "content": { "type": "string" }
+      },
+      "required": ["type"]
+    },
+    "cookies": {
+      "type": "object",
+      "additionalProperties": { "type": "string" },
+      "description": "Per-request cookie overrides"
+    },
+    "assert": {
+      "type": "object",
+      "description": "Declarative assertions (see Assertions reference)"
+    },
+    "tests": { "type": "string", "description": "JavaScript/TypeScript test code" },
+    "preRequestScript": { "type": "string", "description": "Script executed before sending" },
+    "postResponseScript": { "type": "string", "description": "Script executed after response" }
+  }
+}
+```

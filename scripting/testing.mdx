@@ -1,0 +1,142 @@
+---
+title: Testing
+description: Validate API responses in ApiArk using declarative YAML assertions or JavaScript test cases — no external test runner required.
+---
+
+ApiArk has two complementary approaches to testing responses:
+
+1. **Declarative assertions** — defined in the `assert` block of your request YAML, no code required
+2. **Script-based tests** — defined in the `tests` field using JavaScript and Chai-style assertions
+
+You can use both in the same request. Assertion results appear in the **Assertions** tab; test results appear in the **Tests** tab.
+
+## Declarative assertions
+
+The `assert` block lets you validate a response without writing any code. Each key is a path into the response, and the value is either a direct equality check or an operator object.
+
+```yaml
+assert:
+  status: 201
+  body.id: { type: string }
+  responseTime: { lt: 2000 }
+```
+
+### Assertion operators
+
+| Operator | Description | Example |
+|---|---|---|
+| (direct value) | Equality | `status: 200` |
+| `eq` | Equal | `body.name: { eq: "John" }` |
+| `neq` | Not equal | `status: { neq: 500 }` |
+| `gt` | Greater than | `responseTime: { gt: 0 }` |
+| `gte` | Greater than or equal | `body.count: { gte: 1 }` |
+| `lt` | Less than | `responseTime: { lt: 2000 }` |
+| `lte` | Less than or equal | `body.retries: { lte: 3 }` |
+| `in` | Value in array | `status: { in: [200, 201] }` |
+| `contains` | String contains substring | `body.message: { contains: "success" }` |
+| `matches` | Regex match | `body.email: { matches: "^.+@.+$" }` |
+| `type` | Type check | `body.id: { type: string }` |
+| `exists` | Field exists | `body.token: { exists: true }` |
+| `length` | Array or string length | `body.items: { length: 10 }` |
+
+### Full example
+
+```yaml
+assert:
+  status: 201
+  body.id: { type: string }
+  body.name: { eq: "Alice" }
+  body.email: { matches: "^.+@.+$" }
+  body.roles: { contains: "user" }
+  responseTime: { lt: 2000 }
+```
+
+Each assertion produces an `AssertionResult` with the following shape:
+
+| Field | Description |
+|---|---|
+| `path` | The key that was checked (e.g., `body.id`) |
+| `operator` | The operator used (e.g., `type`, `lt`) |
+| `expected` | The expected value |
+| `actual` | The actual value from the response |
+| `passed` | Whether the assertion passed |
+
+## Script-based tests
+
+The `tests` field accepts JavaScript code. Use `ark.test()` to define named test cases and `ark.expect()` for Chai-style assertions.
+
+### Defining a test
+
+```typescript
+ark.test("should return created user", () => {
+  const body = ark.response.json();
+  ark.expect(body).to.have.property("id");
+});
+```
+
+This is the example from the ApiArk schema. Each call to `ark.test()` produces a `TestResult`:
+
+| Field | Description |
+|---|---|
+| `name` | The test name you passed to `ark.test()` |
+| `passed` | Whether the test passed |
+| `error` | The error message if the test threw or an assertion failed |
+
+### More examples
+
+<CodeGroup>
+
+```typescript Check status code
+ark.test("status should be 201", () => {
+  ark.expect(ark.response.status).to.equal(201);
+});
+```
+
+```typescript Assert array length
+ark.test("should return 10 items", () => {
+  const body = ark.response.json();
+  ark.expect(body.items).to.have.lengthOf(10);
+});
+```
+
+```typescript Check response time
+ark.test("response should be fast", () => {
+  ark.expect(ark.response.time).to.be.below(2000);
+});
+```
+
+```typescript Assert a type
+ark.test("id should be a string", () => {
+  const body = ark.response.json();
+  ark.expect(body.id).to.be.a("string");
+});
+```
+
+</CodeGroup>
+
+### Using assertions and tests together
+
+Declarative assertions and script-based tests complement each other. Use `assert` for straightforward structural checks and `tests` for logic that requires conditionals, loops, or complex Chai chains.
+
+```yaml
+assert:
+  status: 201
+  body.id: { type: string }
+
+tests: |
+  ark.test("should return created user", () => {
+    const body = ark.response.json();
+    ark.expect(body).to.have.property("id");
+  });
+```
+
+## Viewing results
+
+After sending a request:
+
+- Open the **Assertions** tab to see each assertion's path, operator, expected value, actual value, and pass/fail status.
+- Open the **Tests** tab to see each named test case and any error messages from failures.
+
+<Tip>
+  If a script-based test throws an unexpected error, the full error message is available in the `error` field of that test's result — visible in the **Tests** tab.
+</Tip>

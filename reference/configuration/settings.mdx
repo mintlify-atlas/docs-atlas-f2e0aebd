@@ -1,0 +1,184 @@
+---
+title: Settings reference
+description: Reference for all configurable settings in ApiArk.
+---
+
+## Accessing settings
+
+Open settings by clicking the settings icon in the bottom-left corner of the app, or press `Ctrl+,`.
+
+## Settings file
+
+All settings are stored locally as JSON at `~/.apiark/settings.json`. No account or cloud sync is required.
+
+```json settings.json
+{
+  "theme": "system",
+  "accentColor": "indigo",
+  "layout": "horizontal",
+  "panelRatio": 0.5,
+  "sidebarWidth": 280,
+  "verifySsl": true,
+  "followRedirects": true,
+  "timeoutMs": 30000,
+  "proxyUrl": null,
+  "proxyUsername": null,
+  "proxyPassword": null,
+  "caCertPath": null,
+  "clientCertPath": null,
+  "clientKeyPath": null,
+  "clientCertPassphrase": null,
+  "updateChannel": "stable",
+  "aiEndpoint": null,
+  "aiApiKey": null,
+  "aiModel": null,
+  "crashReportsEnabled": null,
+  "onboardingComplete": true
+}
+```
+
+<Warning>
+  Editing `settings.json` directly while ApiArk is running may cause your changes to be overwritten. Quit the app before editing the file manually.
+</Warning>
+
+## Settings reference
+
+<AccordionGroup>
+  <Accordion title="Appearance" defaultOpen={true}>
+    <ParamField path="theme" type='"dark" | "light" | "black" | "system"'>
+      Color theme for the application. `"system"` follows the OS light/dark preference. `"black"` is a high-contrast dark variant with a pure black background.
+    </ParamField>
+
+    <ParamField path="accentColor" type='"indigo" | "blue" | "emerald" | "amber" | "rose" | "violet" | "cyan" | "orange"'>
+      Accent color used for interactive elements such as buttons, active states, and highlights.
+    </ParamField>
+
+    <ParamField path="layout" type='"horizontal" | "vertical" | "tabbed"'>
+      Arrangement of the request and response panels.
+
+      - `"horizontal"` — request panel on the left, response panel on the right
+      - `"vertical"` — request panel on top, response panel below
+      - `"tabbed"` — request and response shown in separate tabs within the main area
+    </ParamField>
+
+    <ParamField path="panelRatio" type="number">
+      Ratio of the request panel size relative to the combined panel area. Accepts a value between `0.0` and `1.0`. For example, `0.5` gives equal space to both panels.
+    </ParamField>
+
+    <ParamField path="sidebarWidth" type="number">
+      Width of the left sidebar in pixels. Adjusted automatically when the user resizes the sidebar by dragging.
+    </ParamField>
+  </Accordion>
+
+  <Accordion title="Requests">
+    <ParamField path="verifySsl" type="boolean" default="true">
+      Verify SSL/TLS certificates when making HTTPS requests. Disable only for development against self-signed certificates. Disabling this setting exposes requests to man-in-the-middle attacks.
+    </ParamField>
+
+    <ParamField path="followRedirects" type="boolean" default="true">
+      Automatically follow HTTP redirect responses (3xx). When disabled, ApiArk returns the redirect response directly so you can inspect the `Location` header.
+    </ParamField>
+
+    <ParamField path="timeoutMs" type="number" default="30000">
+      Maximum time in milliseconds to wait for a response before the request is cancelled. Set to `0` to wait indefinitely.
+    </ParamField>
+  </Accordion>
+
+  <Accordion title="Proxy">
+    <Note>
+      Proxy settings apply globally to all requests. To override proxy behavior for an individual request, configure the proxy in the request's settings tab.
+    </Note>
+
+    <ParamField path="proxyUrl" type="string | null">
+      URL of the upstream HTTP or HTTPS proxy server. Accepts standard proxy URL format including the scheme and port.
+
+      ```text
+      http://proxy.company.com:8080
+      ```
+
+      Set to `null` to send requests directly without a proxy.
+    </ParamField>
+
+    <ParamField path="proxyUsername" type="string | null">
+      Username for proxy authentication. Only used when `proxyUrl` is set. Set to `null` if the proxy does not require authentication.
+    </ParamField>
+
+    <ParamField path="proxyPassword" type="string | null">
+      Password for proxy authentication. Only used when `proxyUrl` and `proxyUsername` are set. Stored locally in `settings.json`.
+    </ParamField>
+  </Accordion>
+
+  <Accordion title="Certificates">
+    <Tip>
+      All certificate paths must be absolute paths on the local filesystem. Relative paths are not supported.
+    </Tip>
+
+    <ParamField path="caCertPath" type="string | null">
+      Absolute path to a custom Certificate Authority (CA) certificate file in PEM or CRT format. Use this when connecting to servers whose certificates are signed by a private or internal CA.
+
+      ```text
+      /etc/ssl/certs/my-company-ca.pem
+      ```
+    </ParamField>
+
+    <ParamField path="clientCertPath" type="string | null">
+      Absolute path to a client certificate file. Used for mutual TLS (mTLS) authentication where the server requires the client to present a certificate.
+    </ParamField>
+
+    <ParamField path="clientKeyPath" type="string | null">
+      Absolute path to the private key file corresponding to the client certificate set in `clientCertPath`.
+    </ParamField>
+
+    <ParamField path="clientCertPassphrase" type="string | null">
+      Passphrase used to decrypt the client certificate private key, if the key is encrypted. Set to `null` if the key is not password-protected.
+    </ParamField>
+  </Accordion>
+
+  <Accordion title="Updates">
+    <ParamField path="updateChannel" type='"stable" | "beta" | "nightly"'>
+      Controls which release channel ApiArk checks for updates.
+
+      - `"stable"` — production releases, recommended for most users
+      - `"beta"` — pre-release builds with new features that are still being tested
+      - `"nightly"` — cutting-edge builds generated from the latest commits; may be unstable
+    </ParamField>
+  </Accordion>
+
+  <Accordion title="AI">
+    <Note>
+      ApiArk connects to any OpenAI-compatible API. Your API key is stored locally in `settings.json` and is never sent to ApiArk servers.
+    </Note>
+
+    <ParamField path="aiEndpoint" type="string | null">
+      Base URL of an OpenAI-compatible API endpoint. Set this to use a self-hosted model, a third-party provider, or a local inference server.
+
+      ```text
+      https://api.openai.com/v1
+      ```
+    </ParamField>
+
+    <ParamField path="aiApiKey" type="string | null">
+      API key for the AI endpoint. Required by most hosted providers. Leave `null` for local inference servers that do not require authentication.
+    </ParamField>
+
+    <ParamField path="aiModel" type="string | null">
+      Model identifier to use when sending requests to the AI endpoint. The available values depend on your provider.
+
+      ```text
+      gpt-4o
+      ```
+    </ParamField>
+  </Accordion>
+
+  <Accordion title="Privacy">
+    <ParamField path="crashReportsEnabled" type="boolean | null">
+      Controls whether anonymous crash reports are sent to help improve ApiArk.
+
+      - `true` — crash reports are enabled
+      - `false` — crash reports are disabled
+      - `null` — you have not yet been asked; ApiArk will prompt you on first launch
+
+      ApiArk does not collect any request data, credentials, or personal information. Crash reports contain only stack traces and system metadata.
+    </ParamField>
+  </Accordion>
+</AccordionGroup>

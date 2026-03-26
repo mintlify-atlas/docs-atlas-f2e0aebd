@@ -1,0 +1,128 @@
+---
+title: Monitors
+description: Schedule automated collection runs on a cron schedule with desktop notifications and webhook alerts — running entirely on your machine.
+---
+
+Monitors run your collections automatically on a schedule you define. They use standard cron expressions, send desktop notifications when tests fail, and can POST results to a webhook. Everything runs locally — no data is sent to any external service unless you configure a webhook URL.
+
+<Note>
+  Monitors are paused when ApiArk is closed. They resume automatically the next time you open the app.
+</Note>
+
+## Creating a monitor
+
+<Steps>
+  <Step title="Open the Monitors panel">
+    Click **Monitors** in the left sidebar.
+  </Step>
+  <Step title="Add a new monitor">
+    Click **Add Monitor**.
+  </Step>
+  <Step title="Fill in the configuration">
+    Enter the monitor name, select a collection, set a cron expression, and configure notification options. See the [configuration reference](#configuration) below.
+  </Step>
+  <Step title="Enable the monitor">
+    Toggle the monitor to **Enabled**. ApiArk schedules the first run based on your cron expression.
+  </Step>
+</Steps>
+
+## Configuration
+
+These fields map directly to the `MonitorConfig` type.
+
+<ParamField path="name" type="string" required>
+  Display name for the monitor, shown in the Monitors panel and in desktop notifications.
+</ParamField>
+
+<ParamField path="collectionPath" type="string" required>
+  Path to the collection to run. Select from the collection picker in the UI.
+</ParamField>
+
+<ParamField path="folderPath" type="string">
+  Optionally target a specific subfolder within the collection. Leave blank to run the entire collection.
+</ParamField>
+
+<ParamField path="environmentName" type="string">
+  Name of the environment to activate when the monitor runs. If omitted, requests use no environment variables.
+</ParamField>
+
+<ParamField path="cronExpression" type="string" required>
+  Standard five-field cron expression that controls when the monitor runs. See [cron examples](#cron-expression-examples) below.
+</ParamField>
+
+<ParamField path="notifyOnFailure" type="boolean" default="false">
+  When `true`, ApiArk sends a desktop notification if any request in the run fails or any test assertion does not pass.
+</ParamField>
+
+<ParamField path="webhookUrl" type="string">
+  If provided, ApiArk sends a POST request to this URL with the `MonitorResult` as JSON whenever a run completes with a failure. Useful for routing alerts to Slack, PagerDuty, or a custom endpoint.
+</ParamField>
+
+## Cron expression examples
+
+| Expression | Schedule |
+|---|---|
+| `*/5 * * * *` | Every 5 minutes |
+| `*/15 * * * *` | Every 15 minutes |
+| `0 * * * *` | Every hour |
+| `0 9 * * 1-5` | 9 AM Monday–Friday |
+| `0 0 * * *` | Daily at midnight |
+
+<Tip>
+  A monitor set to `*/5 * * * *` on a staging environment catches regressions within 5 minutes of a deploy, without any CI/CD pipeline changes.
+</Tip>
+
+## Monitor status
+
+The Monitors panel shows a live `MonitorStatus` row for each monitor:
+
+| Field | Description |
+|---|---|
+| `id` | Unique identifier for the monitor |
+| `name` | Display name |
+| `enabled` | Whether the monitor is currently scheduled |
+| `lastRun` | Timestamp of the most recent run |
+| `lastStatus` | Outcome of the most recent run (`passed` or `failed`) |
+| `runCount` | Total number of runs since the monitor was created |
+
+## Run results
+
+Every run produces a `MonitorResult` stored locally:
+
+| Field | Description |
+|---|---|
+| `id` | Auto-incrementing result ID |
+| `monitorId` | Reference to the parent monitor |
+| `timestamp` | When the run completed |
+| `totalRequests` | Number of requests executed |
+| `totalPassed` | Requests that passed all assertions and tests |
+| `totalFailed` | Requests that failed |
+| `totalTimeMs` | Total wall-clock time for the run |
+| `status` | Overall outcome: `passed` or `failed` |
+| `error` | Error message if the run could not complete |
+
+Click any row in the run history to see the per-request breakdown.
+
+## Webhook payload
+
+When `webhookUrl` is set and a run fails, ApiArk POSTs the `MonitorResult` as JSON:
+
+```json
+{
+  "id": 42,
+  "monitorId": "mon_abc123",
+  "timestamp": "2026-03-26T09:00:00.000Z",
+  "totalRequests": 12,
+  "totalPassed": 10,
+  "totalFailed": 2,
+  "totalTimeMs": 3142,
+  "status": "failed",
+  "error": null
+}
+```
+
+The request includes a `Content-Type: application/json` header. No authentication headers are added automatically — if your webhook endpoint requires auth, encode credentials in the URL.
+
+<Warning>
+  Webhook URLs are stored in plain text in your local settings. Do not use URLs that contain sensitive secrets in the path.
+</Warning>

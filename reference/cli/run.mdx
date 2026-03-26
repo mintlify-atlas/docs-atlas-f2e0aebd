@@ -1,0 +1,99 @@
+---
+title: apiark run
+description: Run all requests in a collection directory, execute pre/post scripts and tests, and report results.
+---
+
+## Synopsis
+
+```bash
+apiark run <collection> [options]
+```
+
+## Description
+
+`apiark run` executes all requests in a collection directory sequentially. It runs pre/post-request scripts and assertion tests for each request, then outputs a summary with pass/fail counts and total time.
+
+Use `--reporter` to control output format and `--output` to write the report to a file instead of stdout.
+
+## Arguments
+
+<ParamField path="collection" type="string" required>
+  Path to the collection directory to run.
+</ParamField>
+
+## Options
+
+<ParamField query="--env" type="string">
+  Short: `-e`. Environment name to activate for this run. Environment variables defined under the given name will be applied to all requests.
+</ParamField>
+
+<ParamField query="--delay" type="number" default="0">
+  Short: `-d`. Milliseconds to wait between each request. Useful for rate-limited APIs.
+</ParamField>
+
+<ParamField query="--iterations" type="number" default="1">
+  Short: `-i`. Number of times to repeat the entire collection. Each iteration is counted separately in the summary.
+</ParamField>
+
+<ParamField query="--data" type="string">
+  Path to a CSV, JSON, or YAML data file for data-driven testing. Each row or entry is used as variable input for one iteration.
+</ParamField>
+
+<ParamField query="--reporter" type="string" default="cli">
+  Short: `-r`. Output format for the test report. Accepted values: `cli`, `json`, `junit`, `html`.
+</ParamField>
+
+<ParamField query="--output" type="string">
+  Short: `-o`. File path to write the report to. If not specified, the report is printed to stdout.
+</ParamField>
+
+## Reporter formats
+
+| Format | Description |
+|--------|-------------|
+| `cli` | Human-readable output with pass/fail indicators, printed directly to the terminal |
+| `json` | Machine-readable JSON suitable for downstream processing |
+| `junit` | JUnit XML for CI test reporting (GitHub Actions, GitLab CI, Jenkins) |
+| `html` | Standalone HTML report viewable in any browser |
+
+## Examples
+
+```bash
+# Basic run
+apiark run ./my-api-collection
+
+# With environment
+apiark run ./my-api-collection --env production
+
+# Data-driven with JUnit output
+apiark run ./my-api-collection --data users.csv --reporter junit --output results.xml
+
+# Multiple iterations with delay
+apiark run ./my-api-collection --iterations 5 --delay 500
+```
+
+## Exit codes
+
+| Code | Meaning |
+|------|---------|
+| `0` | All tests passed |
+| `1` | Some tests failed |
+| `2` | Collection not found |
+| `3` | Invalid configuration |
+| `4` | Network error |
+
+<Tip>
+  Combine `--reporter junit --output results.xml` with the `actions/upload-artifact` step in GitHub Actions to get test results visible directly in the Actions UI.
+
+  ```yaml
+  - name: Run tests
+    run: apiark run ./my-collection --reporter junit --output results.xml
+
+  - name: Upload results
+    if: always()
+    uses: actions/upload-artifact@v4
+    with:
+      name: test-results
+      path: results.xml
+  ```
+</Tip>
